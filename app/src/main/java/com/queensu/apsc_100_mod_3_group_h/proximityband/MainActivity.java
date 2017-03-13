@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- OBJECTS VARIABLES --------------------
-
+    // This is a test from Jafer
     SeekBar sensitivitySeekBar;
     TextView sensitivityValueTextView;
     TextView valueTextView;
