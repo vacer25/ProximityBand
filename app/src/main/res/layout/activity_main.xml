@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.queensu.apsc_100_mod_3_group_h.proximityband.MainActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_height="match_parent"
+        android:id="@+id/topLayout"
+        android:background="@drawable/parameter_view_border"
+        android:layout_above="@+id/bottomLayout"
+        android:layout_marginBottom="@dimen/activity_vertical_margin">
+
+        <com.queensu.apsc_100_mod_3_group_h.proximityband.AutoResizeTextView
+            android:text="0000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/valueTextView"
+            android:textColor="@color/colorRangeText"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:textStyle="normal|bold"
+            android:maxLines="1"
+            android:minLines="1"
+            android:layout_alignParentTop="true"
+            android:tag="1"
+            android:textSize="120dp"
+            android:hint="0000"
+            android:textAlignment="center"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:text="@string/signal_strength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/valueTextView"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/textView3"
+            android:layout_marginBottom="15dp" />
+
+        <TextView
+            android:text="Status: disconnected from BLE device"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/textView5"
+            android:layout_marginTop="15dp" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/bottomLayout"
+        android:background="@drawable/parameter_view_border"
+        android:paddingBottom="25dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true">
+
+        <TextView
+            android:text="@string/bluetooth_connection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:id="@+id/bluetoothConenctionTextView"
+            android:layout_alignStart="@+id/bluetoothDeviceSelectionSpinner" />
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:id="@+id/bluetoothDeviceSelectionSpinner"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_toStartOf="@+id/connectionButton"
+            android:layout_below="@+id/bluetoothConenctionTextView"
+            android:foreground="@drawable/parameter_view_border"
+            android:entries="@array/test_ble_devices"
+            android:fadeScrollbars="false" />
+
+        <Button
+            android:text="@string/connect"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:id="@+id/connectionButton"
+            android:layout_alignParentEnd="true"
+            android:layout_alignTop="@+id/bluetoothDeviceSelectionSpinner"
+            android:layout_marginRight="10dp"
+            android:foreground="@drawable/parameter_view_border"
+            android:background="@drawable/button_background"
+            android:onClick="onSetBluetoothDeviceClicked" />
+
+        <SeekBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sensitivitySeekBar"
+            android:layout_alignEnd="@+id/setButtonActionButton"
+            android:layout_below="@+id/senstitivityTextView"
+            android:layout_alignStart="@+id/senstitivityTextView" />
+
+
+        <TextView
+            android:text="@string/sensitivity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/senstitivityTextView"
+            android:layout_below="@+id/bluetoothDeviceSelectionSpinner"
+            android:layout_alignStart="@+id/bluetoothDeviceSelectionSpinner"
+            android:layout_marginTop="15dp" />
+
+        <TextView
+            android:text="@string/button_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/buttonActionTextView"
+            android:layout_below="@+id/sensitivitySeekBar"
+            android:layout_marginTop="15dp"
+            android:layout_alignStart="@+id/sensitivitySeekBar" />
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:id="@+id/buttonActionSelectionSpinner"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_alignTop="@+id/setButtonActionButton"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/setButtonActionButton"
+            android:foreground="@drawable/parameter_view_border"
+            android:entries="@array/button_actions"
+            android:gravity="center_vertical|start" />
+
+        <Button
+            android:text="@string/set"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:id="@+id/setButtonActionButton"
+            android:layout_marginRight="10dp"
+            android:layout_below="@+id/buttonActionTextView"
+            android:layout_alignStart="@+id/connectionButton"
+            android:onClick="onSetButtonActionClicked"
+            android:foreground="@drawable/parameter_view_border"
+            android:background="@drawable/button_background" />
+
+        <TextView
+            android:text="xx"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/sensitivityValueTextView"
+            android:layout_alignBaseline="@+id/senstitivityTextView"
+            android:layout_alignBottom="@+id/senstitivityTextView"
+            android:layout_alignEnd="@+id/bluetoothConenctionTextView"
+            android:layout_toEndOf="@+id/senstitivityTextView"
+            android:layout_marginLeft="5dp" />
+
+    </RelativeLayout>
+</RelativeLayout>
