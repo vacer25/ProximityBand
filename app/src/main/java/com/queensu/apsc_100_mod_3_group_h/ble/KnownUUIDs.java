@@ -1,7 +1,7 @@
 package com.queensu.apsc_100_mod_3_group_h.ble;
 
 
-import com.adafruit.bluefruit.le.connect.app.UartInterfaceActivity;
+import com.queensu.apsc_100_mod_3_group_h.proximityband.UartInterfaceActivity;
 
 import java.util.Collections;
 import java.util.HashMap;
