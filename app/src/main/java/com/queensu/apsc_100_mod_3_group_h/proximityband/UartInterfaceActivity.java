@@ -7,8 +7,8 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import com.adafruit.bluefruit.le.connect.ble.BleManager;
-import com.adafruit.bluefruit.le.connect.ble.BleUtils;
+import com.queensu.apsc_100_mod_3_group_h.ble.BleManager;
+import com.queensu.apsc_100_mod_3_group_h.ble.BleUtils;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
