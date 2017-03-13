@@ -18,7 +18,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 // Main Activity Test Change by Vasa
-// Zhou
+// Zhou z
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- OBJECTS VARIABLES --------------------
