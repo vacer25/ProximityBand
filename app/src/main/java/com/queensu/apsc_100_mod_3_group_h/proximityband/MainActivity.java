@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 // Main Activity Test Change by Vasa
 // Zhou z
+//alec
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- OBJECTS VARIABLES --------------------
