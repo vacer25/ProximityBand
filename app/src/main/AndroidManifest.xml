@@ -30,6 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name="com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService" android:enabled="true"/>
     </application>
 
 </manifest>

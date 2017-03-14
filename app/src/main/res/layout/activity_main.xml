@@ -52,12 +52,12 @@
             android:layout_marginBottom="15dp" />
 
         <TextView
-            android:text="Status: disconnected from BLE device"
+            android:text="@string/status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:id="@+id/textView5"
+            android:id="@+id/connectionStatusTextView"
             android:layout_marginTop="15dp" />
 
     </RelativeLayout>
@@ -122,7 +122,7 @@
             android:layout_marginTop="15dp" />
 
         <TextView
-            android:text="@string/button_action"
+            android:text="@string/demo_action"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/buttonActionTextView"
@@ -140,7 +140,7 @@
             android:layout_alignParentStart="true"
             android:layout_toStartOf="@+id/setButtonActionButton"
             android:foreground="@drawable/parameter_view_border"
-            android:entries="@array/button_actions"
+            android:entries="@array/demo_actions"
             android:gravity="center_vertical|start" />
 
         <Button

@@ -9,11 +9,12 @@
     <string name="connect">Connect</string>
     <string name="connected">connected to</string>
     <string name="disconnect">Disconnect</string>
-    <string name="disconnected">disconnected from</string>
+    <string name="disconnected">disconnected</string>
 
     <string name="sensitivity">Sensitivity:</string>
 
     <string name="button_action">Button Action</string>
+    <string name="demo_action">Demo Action</string>
     <string name="set">Set</string>
 
 
@@ -28,6 +29,31 @@
         <item>Beep phone</item>
         <item>Test alarm</item>
         <item>None</item>
+    </string-array>
+
+    <string-array name="demo_actions">
+        <item>Short vibration</item>
+        <item>Medium vibration</item>
+        <item>Long vibration</item>
+
+        <item>Red LED On</item>
+        <item>Green LED On</item>
+        <item>Blue LED On</item>
+
+        <item>Red LED Off</item>
+        <item>Green LED Off</item>
+        <item>Blue LED Off</item>
+
+        <item>Red LED Flash On</item>
+        <item>Green LED Flash On</item>
+        <item>Blue LED Flash On</item>
+
+        <item>Red LED Flash Off</item>
+        <item>Green LED Flash Off</item>
+        <item>Blue LED Flash Off</item>
+
+        <item>ALARM</item>
+
     </string-array>
 
 </resources>
