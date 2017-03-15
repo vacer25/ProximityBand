@@ -3,7 +3,7 @@
 
     <string name="status">Status: </string>
 
-    <string name="signal_strength">Signal Strength</string>
+    <string name="signal_strength">Current Signal Strength:</string>
 
     <string name="bluetooth_connection">Bluetooth LE Device</string>
     <string name="connect">Connect</string>
