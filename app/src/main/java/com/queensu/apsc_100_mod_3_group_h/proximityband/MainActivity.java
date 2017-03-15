@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- BLUETOOTH CONNECTION --------------------
 
-    // Code to manage Service lifecycle.
+    // Code to manage Service lifecycle
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
         @Override
