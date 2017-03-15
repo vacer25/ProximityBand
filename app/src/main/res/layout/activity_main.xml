@@ -40,15 +40,6 @@
             android:id="@+id/connectionStatusTextView"
             android:layout_marginTop="15dp" />
 
-        <TextView
-            android:text="@string/signal_strength"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/textView3"
-            android:layout_marginBottom="10dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignStart="@+id/rssiValueGraph" />
-
         <com.queensu.apsc_100_mod_3_group_h.proximityband.AutoResizeTextView
             android:text="N/A"
             android:layout_width="wrap_content"
@@ -65,7 +56,19 @@
             android:textSize="30dp"
             android:layout_alignBaseline="@+id/textView3"
             android:layout_alignBottom="@+id/textView3"
-            android:layout_alignEnd="@+id/rssiValueGraph" />
+            android:layout_alignEnd="@+id/rssiValueGraph"
+            android:layout_marginTop="0dp" />
+
+        <TextView
+            android:text="@string/signal_strength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView3"
+            android:layout_marginBottom="20dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp" />
 
     </RelativeLayout>
 
