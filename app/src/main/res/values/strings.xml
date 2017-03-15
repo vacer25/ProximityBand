@@ -52,6 +52,9 @@
         <item>Green LED Flash Off</item>
         <item>Blue LED Flash Off</item>
 
+        <item>All LEDs On</item>
+        <item>All LEDs Off</item>
+
         <item>ALARM</item>
 
     </string-array>

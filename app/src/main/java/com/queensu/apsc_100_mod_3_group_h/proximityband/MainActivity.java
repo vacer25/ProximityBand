@@ -226,6 +226,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             sendBluetoothData("k");
         }
         else if(selection == 15) {
+            sendBluetoothData("RGB");
+        }
+        else if(selection == 16) {
+            sendBluetoothData("rgb");
+        }
+        else if(selection == 17) {
             sendBluetoothData("X");
         }
 
@@ -270,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     }
 
-    // -------------------- BLUETOOTH CONENCTION --------------------
+    // -------------------- BLUETOOTH CONNECTION --------------------
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -301,6 +307,13 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         if(mBluetoothLeService != null) {
             for (int currentCharIndex = 0; currentCharIndex < dataToSend.length(); currentCharIndex++) {
                 mBluetoothLeService.writeCustomCharacteristic((int)(dataToSend.charAt(currentCharIndex)));
+                if(dataToSend.length() > 0) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
             }
         }
     }
@@ -425,12 +438,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 isConnected = true;
                 connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connected) + " " + currentSelectedBluetoothName);
                 connectionButton.setText(R.string.disconnect);
-                invalidateOptionsMenu();
+                //invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 isConnected = false;
                 connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.disconnected));
                 connectionButton.setText(R.string.connect);
-                invalidateOptionsMenu();
+                //invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
