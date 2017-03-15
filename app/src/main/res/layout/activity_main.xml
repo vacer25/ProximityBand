@@ -109,7 +109,8 @@
             android:id="@+id/sensitivitySeekBar"
             android:layout_alignEnd="@+id/setButtonActionButton"
             android:layout_below="@+id/senstitivityTextView"
-            android:layout_alignStart="@+id/senstitivityTextView" />
+            android:layout_alignStart="@+id/senstitivityTextView"
+            android:progress="100" />
 
 
         <TextView

@@ -19,9 +19,7 @@
 
 
     <string-array name="test_ble_devices">
-        <item>Test device 1</item>
-        <item>Test device 2</item>
-        <item>Test device 3</item>
+        <item>None</item>
     </string-array>
 
     <string-array name="button_actions">
