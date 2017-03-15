@@ -7,7 +7,7 @@ package com.queensu.apsc_100_mod_3_group_h.proximityband;
 public class KalmanFilter {
 
     public double Q = 0.000001;
-    public double R = 0.01;
+    public double R = 0.0001;
     public double P = 1, X = 0, K;
 
     //public KalmanFilter() {

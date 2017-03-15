@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private boolean mScanning;
     private Handler bleHandler;
     private Handler pingHandler;
-    private Handler rssiHandler;
+    //private Handler rssiHandler;
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final long SCAN_PERIOD = 30000;
@@ -64,18 +65,22 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     boolean isConnected = false;
 
-    ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<BluetoothDevice>();
+    ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
     String currentSelectedBluetoothAddress;
     String currentSelectedBluetoothName;
 
     // -------------------- RSSI ALGORITHM --------------------
 
     int currentRSSI = 0;
+    float filteredRSSI = 0;
 
     int rssiThreshold = -100;
     int numberOfRSSIReadings = 0;
 
-    LineGraphSeries<DataPoint> rssiGraphSeries;
+    LineGraphSeries<DataPoint> currentRSSIGraphSeries;
+    LineGraphSeries<DataPoint> filteredRSSIGraphSeries;
+
+    KalmanFilter rssiFilter;
 
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
@@ -85,7 +90,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         setContentView(R.layout.activity_main);
         bleHandler = new Handler();
         pingHandler = new Handler();
-        rssiHandler = new Handler();
+        //rssiHandler = new Handler();
+
+        rssiFilter = new KalmanFilter();
 
         checkBLECompatibility();
         getActivityViewReferences();
@@ -159,11 +166,20 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         rssiValueGraph = (GraphView)findViewById(R.id.rssiValueGraph);
         numberOfRSSIReadings = 0;
-        rssiGraphSeries = new LineGraphSeries<>();
-        rssiValueGraph.addSeries(rssiGraphSeries);
+
+        currentRSSIGraphSeries = new LineGraphSeries<>();
+        currentRSSIGraphSeries.setColor(Color.BLUE);
+        currentRSSIGraphSeries.setThickness(2);
+        rssiValueGraph.addSeries(currentRSSIGraphSeries);
+
+        filteredRSSIGraphSeries = new LineGraphSeries<>();
+        filteredRSSIGraphSeries.setColor(Color.GREEN);
+        filteredRSSIGraphSeries.setThickness(5);
+        rssiValueGraph.addSeries(filteredRSSIGraphSeries);
 
         rssiValueGraph.getGridLabelRenderer().setHorizontalAxisTitle("Time");
-        rssiValueGraph.getGridLabelRenderer().setNumHorizontalLabels(0);
+        //rssiValueGraph.getGridLabelRenderer().setVerticalAxisTitle("Signal Strength");
+        rssiValueGraph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
         rssiValueGraph.getViewport().setXAxisBoundsManual(true);
         rssiValueGraph.getViewport().setMinX(0);
         rssiValueGraph.getViewport().setMaxX(50);
@@ -201,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- USER INTERACTION --------------------
 
-    void onSetButtonActionClicked(View v) {
+    public void onSetButtonActionClicked(View v) {
         //HelperFunctions.vibrate(this, 50);
 
         long selection = buttonActionSelectionSpinner.getSelectedItemId();
@@ -263,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     }
 
-    void onSetBluetoothDeviceClicked(View v) {
+    public void onSetBluetoothDeviceClicked(View v) {
         //HelperFunctions.vibrate(this, 50);
         if(mBluetoothLeService != null) {
             if(!isConnected) {
@@ -318,8 +334,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         if(valueTextView != null) {
             valueTextView.setText(String.valueOf(rssiValue));
         }
-        if(rssiGraphSeries!= null && updateGraph) {
-            rssiGraphSeries.appendData(new DataPoint(numberOfRSSIReadings, rssiValue), true, 50);
+        if(currentRSSIGraphSeries != null && filteredRSSIGraphSeries != null && updateGraph) {
+            filteredRSSI = rssiFilter.update((float)rssiValue);
+            currentRSSIGraphSeries.appendData(new DataPoint(numberOfRSSIReadings, rssiValue), true, 50);
+            filteredRSSIGraphSeries.appendData(new DataPoint(numberOfRSSIReadings, filteredRSSI), true, 50);
             numberOfRSSIReadings++;
         }
 
@@ -402,8 +420,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         connectionButton.setText(R.string.disconnect);
 
         //numberOfRSSIReadings = 0;
-        //rssiGraphSeries = new LineGraphSeries<>();
-        //rssiValueGraph.addSeries(rssiGraphSeries);
+        //currentRSSIGraphSeries = new LineGraphSeries<>();
+        //rssiValueGraph.addSeries(currentRSSIGraphSeries);
     }
 
     void setUpDisconnectFromBluetooth() {
@@ -459,6 +477,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     }
 
+    @Deprecated
     private void scanLeDevice(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
@@ -514,7 +533,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                             if(device.getAddress().equals(currentSelectedBluetoothAddress)) {
                                 currentRSSI = rssi;
                                 setRSSIValue(rssi, false);
-                                Log.v("BLE SCAN", "Found new device! Address: " + device.getAddress() + " Name: " + device.getName());
+                                //Log.v("BLE SCAN", "Found new device! Address: " + device.getAddress() + " Name: " + device.getName());
                             }
                             addBLEDeviceToList(device);
                         }
@@ -542,7 +561,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            Log.v("BLE CALLBACK", "onReceive... Action: " + action + " Extra: " + intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+            //Log.v("BLE CALLBACK", "onReceive... Action: " + action + " Extra: " + intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 setUpConnectToBluetooth();
                 //invalidateOptionsMenu();
