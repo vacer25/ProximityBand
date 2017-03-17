@@ -48,7 +48,7 @@ public class BluetoothLeService extends Service {
 
     private Timer mRssiTimer;
 
-    public static int rssiScanRate = 50;
+
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -94,7 +94,7 @@ public class BluetoothLeService extends Service {
                     }
                 };
                 mRssiTimer = new Timer();
-                mRssiTimer.schedule(task, 0, rssiScanRate);
+                mRssiTimer.schedule(task, 0, MainActivity.RSSI_SCAN_INTERVAL);
 
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
@@ -106,7 +106,9 @@ public class BluetoothLeService extends Service {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
-                mRssiTimer.cancel();
+                if(mRssiTimer != null) {
+                    mRssiTimer.cancel();
+                }
                 broadcastUpdate(intentAction);
             }
         }
@@ -365,9 +367,11 @@ public class BluetoothLeService extends Service {
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString(UUID_TX));
-        mWriteCharacteristic.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,0);
-        if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
-            Log.w(TAG, "Failed to write characteristic");
+        if(mWriteCharacteristic != null) {
+            mWriteCharacteristic.setValue(value, android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+            if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
+                Log.w(TAG, "Failed to write characteristic");
+            }
         }
 
     }

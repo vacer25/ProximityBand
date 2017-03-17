@@ -1,22 +1,35 @@
 <resources>
+
+    <!-- APP NAME -->
+
     <string name="app_name">Proximity Band</string>
 
-    <string name="status">Status: </string>
-
-    <string name="signal_strength">Current Signal Strength:</string>
+    <!-- CONNECTION -->
 
     <string name="bluetooth_connection">Bluetooth LE Device</string>
     <string name="connect">Connect</string>
     <string name="connected">connected to</string>
+    <string name="connecting">connecting to</string>
     <string name="disconnect">Disconnect</string>
     <string name="disconnected">disconnected</string>
+    <string name="disconnecting">disconnecting from</string>
+    <string name="scanning">Scanning...</string>
 
-    <string name="sensitivity">Sensitivity:</string>
+    <!-- LABELS -->
+
+    <string name="threshold">Threshold:</string>
+    <string name="filtering">Filtering:</string>
+    <string name="status">Status: </string>
+    <string name="signal_strength">Current Signal Strength:</string>
+    <string name="db">db</string>
+
+    <!-- BUTTON LABELS -->
 
     <string name="button_action">Button Action</string>
     <string name="demo_action">Demo Action</string>
     <string name="set">Set</string>
 
+    <!-- ARRAYS -->
 
     <string-array name="test_ble_devices">
         <item>None</item>
