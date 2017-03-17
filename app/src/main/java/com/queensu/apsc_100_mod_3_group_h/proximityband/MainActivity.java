@@ -74,9 +74,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     int currentRSSI = 0;
     float filteredRSSI = 0;
+    double rssiFilteringSmoothness = 0.001f;
 
     int rssiThreshold = -100;
     int numberOfRSSIReadings = 0;
+
+    boolean canActivateAlarmNow = false;
 
     LineGraphSeries<DataPoint> currentRSSIGraphSeries;
     LineGraphSeries<DataPoint> filteredRSSIGraphSeries;
@@ -89,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private static final long SCAN_PERIOD = 30000; // ms
     private static final long PING_INTERVAL = 250; // ms
     public static int RSSI_GRAPH_UPDATE_INTERVAL = 50;
-    public static int RSSI_SCAN_INTERVAL = 500;
+    public static int RSSI_SCAN_INTERVAL = 1000;
     public static int RSSI_UPDATE_FILTERING_INTERVAL = 10;
     private static final int REQUEST_ENABLE_BT = 1;
 
@@ -98,8 +101,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private static final double MAX_FILTERING = 0.01;
     private static final double MIN_FILTERING = 0.0001;
 
-    private static final int MAX_GRAPH_RSSI = -30;
-    private static final int MIN_GRAPH_RSSI = -110;
+    private static final int MAX_RSSI = -30;
+    private static final int MIN_RSSI = -110;
 
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
@@ -199,8 +202,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         rssiValueGraph.getViewport().setMinX(0);
         rssiValueGraph.getViewport().setMaxX(RSSI_GRAPH_NUMBER_OF_DATA_POINTS);
         rssiValueGraph.getViewport().setYAxisBoundsManual(true);
-        rssiValueGraph.getViewport().setMinY(MIN_GRAPH_RSSI);
-        rssiValueGraph.getViewport().setMaxY(MAX_GRAPH_RSSI);
+        rssiValueGraph.getViewport().setMinY(MIN_RSSI);
+        rssiValueGraph.getViewport().setMaxY(MAX_RSSI);
 
         // Bluetooth device selection
         bluetoothDeviceSelectionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -228,11 +231,13 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         // Threshold seekbar
         thresholdSeekBar.setOnSeekBarChangeListener(this);
-        setThresholdValue(thresholdSeekBar.getProgress());
+        thresholdSeekBar.setProgress((int)(HelperFunctions.map(rssiThreshold, MAX_RSSI, MIN_RSSI, 0, 100)));
+        setThresholdValue(rssiThreshold);
 
         // Filtering seekbar
         filteringSeekBar.setOnSeekBarChangeListener(this);
-        rssiFilter.R = HelperFunctions.map(filteringSeekBar.getProgress(), 0f, 100f, (float)MIN_FILTERING, (float)MAX_FILTERING);
+        filteringSeekBar.setProgress((int)(HelperFunctions.map((float)rssiFilteringSmoothness, (float)MIN_FILTERING, (float)MAX_FILTERING, 0f, 100f)));
+        rssiFilter.R = rssiFilteringSmoothness;
         setFilteringValueTextView(rssiFilter.R);
 
     }
@@ -353,29 +358,32 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if(seekBar == thresholdSeekBar) {
-            rssiThreshold = -1 * progress;
-            setThresholdValue(progress);
-
+            rssiThreshold = (int)(HelperFunctions.map(progress, 0, 100, MAX_RSSI, MIN_RSSI));
+            setThresholdValue(rssiThreshold);
         }
         else if(seekBar == filteringSeekBar) {
             rssiFilter.R = HelperFunctions.map(filteringSeekBar.getProgress(), 0f, 100f, (float)MIN_FILTERING, (float)MAX_FILTERING);
+            rssiFilteringSmoothness = rssiFilter.R;
             setFilteringValueTextView(rssiFilter.R);
         }
     }
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
+            if(seekBar == thresholdSeekBar) {
+                canActivateAlarmNow = false;
+            }
     }
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        //if(seekBar == thresholdSeekBar) {
-        //    rssiThreshold = -1 * thresholdSeekBar.getProgress();
-        //}
+        if(seekBar == thresholdSeekBar) {
+            canActivateAlarmNow = true;
+        }
     }
 
     void setThresholdValue(int valueToSet){
         DataPoint thresholdDataPoints[] = {
-                new DataPoint(0, (float)(-1 * valueToSet)),
-                new DataPoint(numberOfRSSIReadings, (float)(-1 * valueToSet))
+                new DataPoint(0, (float)(valueToSet)),
+                new DataPoint(numberOfRSSIReadings, (float)(valueToSet))
         };
         thresholdRSSIGraphSeries.resetData(thresholdDataPoints);
         setThresholdValueText(valueToSet);
@@ -415,12 +423,18 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         if(currentRSSIGraphSeries != null && filteredRSSIGraphSeries != null && updateGraph) {
             currentRSSIGraphSeries.appendData(new DataPoint(numberOfRSSIReadings, rssiValue), true, RSSI_GRAPH_NUMBER_OF_DATA_POINTS);
             filteredRSSIGraphSeries.appendData(new DataPoint(numberOfRSSIReadings, filteredRSSI), true, RSSI_GRAPH_NUMBER_OF_DATA_POINTS);
-            setThresholdValue(-1 * rssiThreshold);
+            setThresholdValue(rssiThreshold);
             numberOfRSSIReadings++;
         }
 
         if(filteredRSSI < rssiThreshold) {
-            sendBluetoothData("X");
+            if(canActivateAlarmNow) {
+                sendBluetoothData("X");
+            }
+            rssiValueTextView.setTextColor(Color.RED);
+        }
+        else {
+            rssiValueTextView.setTextColor(Color.BLACK);
         }
     }
 
@@ -536,7 +550,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         bluetoothDeviceSelectionSpinner.setEnabled(true);
 
-        rssiValueTextView.setText("N/A");
+        rssiValueTextView.setText("---");
         scanLeDevice(true);
 
     }

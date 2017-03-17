@@ -90,7 +90,9 @@ public class BluetoothLeService extends Service {
                 TimerTask task = new TimerTask() {
                     @Override
                     public void run() {
-                        mBluetoothGatt.readRemoteRssi();
+                        if(mBluetoothGatt != null) {
+                            mBluetoothGatt.readRemoteRssi();
+                        }
                     }
                 };
                 mRssiTimer = new Timer();

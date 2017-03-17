@@ -40,8 +40,8 @@
             android:id="@+id/connectionStatusTextView"
             android:layout_marginTop="15dp" />
 
-        <com.queensu.apsc_100_mod_3_group_h.proximityband.AutoResizeTextView
-            android:text="N/A"
+        <TextView
+            android:text="---"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/rssiValueTextView"
@@ -50,8 +50,6 @@
             android:textStyle="normal|bold"
             android:maxLines="1"
             android:minLines="1"
-            android:tag="1"
-            android:hint="000"
             android:textAlignment="center"
             android:textSize="30dp"
             android:layout_alignBaseline="@+id/textView3"
