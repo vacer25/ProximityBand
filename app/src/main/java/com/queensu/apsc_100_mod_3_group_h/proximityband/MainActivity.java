@@ -91,12 +91,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private static final long SCAN_PERIOD = 30000; // ms
     private static final long PING_INTERVAL = 250; // ms
-    public static int RSSI_GRAPH_UPDATE_INTERVAL = 50;
+    public static int RSSI_GRAPH_UPDATE_INTERVAL = 250;
     public static int RSSI_SCAN_INTERVAL = 1000;
-    public static int RSSI_UPDATE_FILTERING_INTERVAL = 10;
+    public static int RSSI_UPDATE_FILTERING_INTERVAL = 50;
     private static final int REQUEST_ENABLE_BT = 1;
 
-    private static final int RSSI_GRAPH_NUMBER_OF_DATA_POINTS = 500;
+    private static final int RSSI_GRAPH_NUMBER_OF_DATA_POINTS = 250;
 
     private static final double MAX_FILTERING = 0.01;
     private static final double MIN_FILTERING = 0.0001;
@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             sendBluetoothData("RGB");
         }
         else if(selection == 16) {
-            sendBluetoothData("rgb");
+            sendBluetoothData("rgbijk");
         }
         else if(selection == 17) {
             sendBluetoothData("X");
