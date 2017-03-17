@@ -330,6 +330,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         else if(selection == 17) {
             sendBluetoothData("X");
         }
+        else if(selection == 18) {
+            sendBluetoothData("x");
+        }
 
     }
 
@@ -429,11 +432,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         if(filteredRSSI < rssiThreshold) {
             if(canActivateAlarmNow) {
-                sendBluetoothData("X");
+                sendBluetoothData("X"); // Alarm of
             }
             rssiValueTextView.setTextColor(Color.RED);
         }
         else {
+            sendBluetoothData("x"); // Alarm off
             rssiValueTextView.setTextColor(Color.BLACK);
         }
     }
@@ -537,7 +541,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         scanLeDevice(false, false);
 
     }
-
 
     void setUpDisconnectFromBluetooth() {
 
