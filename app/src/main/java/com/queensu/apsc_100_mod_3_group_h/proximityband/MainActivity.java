@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     int currentRSSI = 0;
     float filteredRSSI = 0;
-    double rssiFilteringSmoothness = 0.001f;
+    float rssiFilteringSmoothness = 0.001f;
 
     int rssiThreshold = -100;
     int numberOfRSSIReadings = 0;
@@ -140,6 +140,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     String PREF_BLE_ADDRESS = "Bluetooth_Address";
     String PREF_BLE_NAME = "Bluetooth_Name";
+
+    String PREF_FILTERING = "Filtering_Smoothness";
+    String PREF_THRESHOLD = "RSSI_Threshold";
 
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
@@ -221,6 +224,14 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         currentSelectedBluetoothAddress = prefs.getString(PREF_BLE_ADDRESS, "");
         currentSelectedBluetoothName = prefs.getString(PREF_BLE_NAME, "");
 
+        rssiFilteringSmoothness = prefs.getFloat(PREF_FILTERING, rssiFilteringSmoothness);
+        rssiThreshold = prefs.getInt(PREF_THRESHOLD, rssiThreshold);
+
+        rssiFilter.R = rssiFilteringSmoothness;
+
+        setThresholdValue(rssiThreshold);
+        setFilteringValueTextView(rssiFilteringSmoothness);
+
     }
 
     // -------------------- UI AND GRAPHING --------------------
@@ -288,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         // Filtering seekbar
         filteringSeekBar.setOnSeekBarChangeListener(this);
-        filteringSeekBar.setProgress((int)(HelperFunctions.map((float)rssiFilteringSmoothness, (float)MIN_FILTERING, (float)MAX_FILTERING, 0f, 100f)));
+        filteringSeekBar.setProgress((int)(HelperFunctions.map(rssiFilteringSmoothness, (float)MIN_FILTERING, (float)MAX_FILTERING, 0f, 100f)));
         rssiFilter.R = rssiFilteringSmoothness;
         setFilteringValueTextView(rssiFilter.R);
 
@@ -415,14 +426,15 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if(seekBar == thresholdSeekBar) {
-            rssiThreshold = (int)(HelperFunctions.map(progress, 0, 100, MAX_RSSI, MIN_RSSI));
-            setThresholdValue(rssiThreshold);
-        }
-        else if(seekBar == filteringSeekBar) {
-            rssiFilter.R = HelperFunctions.map(filteringSeekBar.getProgress(), 0f, 100f, (float)MIN_FILTERING, (float)MAX_FILTERING);
-            rssiFilteringSmoothness = rssiFilter.R;
-            setFilteringValueTextView(rssiFilter.R);
+        if(fromUser) {
+            if (seekBar == thresholdSeekBar) {
+                rssiThreshold = (int) (HelperFunctions.map(progress, 0, 100, MAX_RSSI, MIN_RSSI));
+                setThresholdValue(rssiThreshold);
+            } else if (seekBar == filteringSeekBar) {
+                rssiFilteringSmoothness = HelperFunctions.map(filteringSeekBar.getProgress(), 0f, 100f, (float) MIN_FILTERING, (float) MAX_FILTERING);
+                rssiFilter.R = rssiFilteringSmoothness;
+                setFilteringValueTextView(rssiFilter.R);
+            }
         }
     }
     @Override
@@ -434,7 +446,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         if(seekBar == thresholdSeekBar) {
+            prefs.edit().putInt(PREF_THRESHOLD, rssiThreshold).apply();
             canActivateAlarmNow = true;
+        }
+        else if(seekBar == filteringSeekBar) {
+            prefs.edit().putFloat(PREF_FILTERING, rssiFilteringSmoothness).apply();
         }
     }
 
@@ -443,7 +459,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 new DataPoint(0, (float)(valueToSet)),
                 new DataPoint(numberOfRSSIReadings, (float)(valueToSet))
         };
-        thresholdRSSIGraphSeries.resetData(thresholdDataPoints);
+        if(thresholdRSSIGraphSeries != null) {
+            thresholdRSSIGraphSeries.resetData(thresholdDataPoints);
+        }
         setThresholdValueText(valueToSet);
     }
 
