@@ -75,6 +75,7 @@ public class BluetoothLeService extends Service {
     public static final String UUID_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     public static final String UUID_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
     public static final String UUID_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+    private static String CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
@@ -117,9 +118,15 @@ public class BluetoothLeService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+
                 mUartService = gatt.getService(UUID.fromString(UUID_SERVICE));
                 BluetoothGattCharacteristic dataCharacteristic = mUartService.getCharacteristic(UUID.fromString(UUID_RX));
                 setCharacteristicNotification(dataCharacteristic, true);
+                final UUID clientCharacteristicConfiguration = UUID.fromString(CHARACTERISTIC_CONFIG);
+                final BluetoothGattDescriptor config = dataCharacteristic.getDescriptor(clientCharacteristicConfiguration);
+                config.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                gatt.writeDescriptor(config);
+
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
@@ -144,7 +151,7 @@ public class BluetoothLeService extends Service {
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d(TAG, String.format("BluetoothGatt ReadRssi[%d]", rssi));
+                //Log.d(TAG, String.format("BluetoothGatt ReadRssi[%d]", rssi));
                 BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(UUID.randomUUID(), 0, 0);
                 characteristic.setValue(String.valueOf(rssi));
                 broadcastUpdate(ACTION_READ_REMOTE_RSSI, characteristic);

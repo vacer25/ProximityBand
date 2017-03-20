@@ -14,6 +14,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     // -------------------- BLE DEVICES VARIABLES --------------------
 
     boolean isConnected = false;
+    boolean isOutOfRange = false;
 
     int currentConnectionTime = 0;
 
@@ -120,6 +122,17 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // Vibrate for 400 milliseconds
     long[] ALARM_VIBRATE_PATTERN = {0,200,50,200};
+
+    // -------------------- DATA CONSTANTS --------------------
+
+    public final static String COMMAND_BUTTON_PRESSED = "B1";
+    public final static String COMMAND_BUTTON_RELEASED = "B0";
+
+    public final static String COMMAND_SWITCH_POSITION_1 = "S1";
+    public final static String COMMAND_SWITCH_POSITION_2 = "S2";
+    public final static String COMMAND_SWITCH_POSITION_3 = "S3";
+
+    public final static String COMMAND_ACK = "A";
 
     // -------------------- PREFERENCES --------------------
 
@@ -474,16 +487,21 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         if(filteredRSSI < rssiThreshold) {
             if(canActivateAlarmNow) {
+                isOutOfRange = true;
                 sendBluetoothData("X"); // Alarm on
+                vibrator.vibrate(ALARM_VIBRATE_PATTERN, 0);
             }
-            vibrator.vibrate(ALARM_VIBRATE_PATTERN, 0);
             rssiValueTextView.setTextColor(Color.RED);
         }
         else {
-            sendBluetoothData("x"); // Alarm off
-            rssiValueTextView.setTextColor(Color.BLACK);
-            vibrator.cancel();
+            if(isOutOfRange) {
+                isOutOfRange = false;
+                sendBluetoothData("x"); // Alarm off
+                rssiValueTextView.setTextColor(Color.BLACK);
+                vibrator.cancel();
+            }
         }
+
     }
 
     // -------------------- CONNECTION TIME --------------------
@@ -521,7 +539,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         @Override
         public void run() {
             try {
-                sendBluetoothData("A");
+                sendBluetoothData("!");
                 //mBluetoothLeService.readCharacteristic(bluetoothRXCharacteristic);
                 //mBluetoothLeService.readCustomCharacteristic();
             } finally {
@@ -588,6 +606,38 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 }
             }
         }
+    }
+
+    void processReceivedBluetoothData(String dataReceived) {
+
+        String[] dataReceivedSplit = dataReceived.split("\n", 2);
+        dataReceived = dataReceivedSplit[0].replace("\r", "");
+
+        Log.v("DATA", "Received Data: " + dataReceived);
+
+        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+
+        if(dataReceived.equals(COMMAND_SWITCH_POSITION_1)) {
+            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            sendBluetoothData(COMMAND_ACK);
+        }
+        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_2)) {
+            audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
+            sendBluetoothData(COMMAND_ACK);
+        }
+        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_3)) {
+            audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+            sendBluetoothData(COMMAND_ACK);
+        }
+        else if(dataReceived.equals(COMMAND_BUTTON_PRESSED)) {
+            vibrator.vibrate(1000000);
+            sendBluetoothData(COMMAND_ACK);
+        }
+        else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
+            vibrator.cancel();
+            sendBluetoothData(COMMAND_ACK);
+        }
+
     }
 
     // Code to manage Service lifecycle
@@ -790,10 +840,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 // Show all the supported services and characteristics on the user interface.
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                Log.v("BLE DATA", "Data available: " + intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                processReceivedBluetoothData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
             else if (BluetoothLeService.ACTION_READ_REMOTE_RSSI.equals(action)) {
-                Log.d("RSSI", String.format("Got RSSI: %d", currentRSSI));
+                //Log.d("RSSI", String.format("Got RSSI: %d", currentRSSI));
                 try {
                     String[] rssiToSetSplit = (intent.getStringExtra(BluetoothLeService.EXTRA_DATA)).split("\n", 2);
                     currentRSSI = Integer.parseInt(rssiToSetSplit[0]);
