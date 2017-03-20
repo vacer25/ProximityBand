@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/rssiValueGraph"
-            android:layout_marginBottom="50dp"
+            android:layout_marginBottom="75dp"
             android:layout_marginRight="25dp"
             android:layout_marginTop="40dp"
             android:layout_marginLeft="12dp"
@@ -41,32 +41,57 @@
             android:layout_marginTop="15dp" />
 
         <TextView
+            android:text="@string/connection_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/connectionTimeLabelTextView"
+            android:layout_marginBottom="15dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="25dp"
+            android:layout_marginLeft="25dp" />
+
+        <TextView
             android:text="---"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/rssiValueTextView"
+            android:id="@+id/connectionTimeTextView"
             android:textColor="@color/colorRangeText"
-            android:gravity="center"
             android:textStyle="normal|bold"
             android:maxLines="1"
             android:minLines="1"
-            android:textAlignment="center"
+            android:textAlignment="textEnd"
             android:textSize="30dp"
-            android:layout_alignBottom="@+id/textView3"
+            android:layout_alignBottom="@+id/connectionTimeLabelTextView"
             android:layout_alignEnd="@+id/rssiValueGraph"
             android:layout_marginTop="0dp"
-            android:layout_marginBottom="-10dp" />
+            android:layout_marginBottom="-10dp"
+            android:gravity="end" />
 
         <TextView
             android:text="@string/signal_strength"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/textView3"
-            android:layout_marginBottom="25dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="25dp"
-            android:layout_marginLeft="25dp" />
+            android:id="@+id/rssiValueLabelTextView"
+            android:layout_above="@+id/connectionTimeTextView"
+            android:layout_alignStart="@+id/connectionTimeLabelTextView"
+            android:layout_marginBottom="5dp" />
+
+        <TextView
+            android:text="---"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/rssiValueTextView"
+            android:textColor="@color/colorRangeText"
+            android:textStyle="normal|bold"
+            android:maxLines="1"
+            android:minLines="1"
+            android:textAlignment="textEnd"
+            android:textSize="30dp"
+            android:layout_above="@+id/connectionTimeLabelTextView"
+            android:layout_alignEnd="@+id/rssiValueGraph"
+            android:layout_marginBottom="5dp"
+            android:gravity="end"/>
 
     </RelativeLayout>
 
@@ -99,7 +124,7 @@
             android:layout_below="@+id/bluetoothConenctionTextView"
             android:foreground="@drawable/parameter_view_border"
             android:entries="@array/test_ble_devices"
-            android:fadeScrollbars="false" />
+            android:fadeScrollbars="true" />
 
         <Button
             android:text="@string/connect"

@@ -20,8 +20,9 @@
     <string name="threshold">Threshold:</string>
     <string name="filtering">Filtering:</string>
     <string name="status">Status: </string>
-    <string name="signal_strength">Current Signal Strength:</string>
+    <string name="signal_strength">Signal Strength:</string>
     <string name="db">db</string>
+    <string name="connection_time">Connection time:</string>
 
     <!-- BUTTON LABELS -->
 

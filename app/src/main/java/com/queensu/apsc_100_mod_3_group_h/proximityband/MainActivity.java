@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     TextView filteringValueTextView;
     TextView rssiValueTextView;
     TextView connectionStatusTextView;
+    TextView connectionTimeTextView;
 
     Button connectionButton;
     Button setButtonActionButton;
@@ -56,15 +57,17 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private BluetoothLeService mBluetoothLeService;
     private BluetoothAdapter mBluetoothAdapter;
-    private boolean mScanning;
+    private boolean isScanning;
     private Handler pingHandler;
-    //private Handler bleHandler;
+    private Handler connectionTimeHandler;
     private Handler rssiHandler;
     private Handler rssiFilteringHandler;
 
     // -------------------- BLE DEVICES VARIABLES --------------------
 
     boolean isConnected = false;
+
+    int currentConnectionTime = 0;
 
     ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
     String currentSelectedBluetoothAddress = "";
@@ -111,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         pingHandler = new Handler();
-        //bleHandler = new Handler();
+        connectionTimeHandler = new Handler();
         rssiHandler = new Handler();
         rssiFilteringHandler = new Handler();
 
@@ -186,6 +189,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         rssiValueTextView = (TextView)findViewById(R.id.rssiValueTextView);
         connectionStatusTextView = (TextView)findViewById(R.id.connectionStatusTextView);
 
+        connectionTimeTextView = (TextView)findViewById(R.id.connectionTimeTextView);
+        setConnectionTime(0);
+
         bluetoothDeviceSelectionSpinner = (Spinner)findViewById(R.id.bluetoothDeviceSelectionSpinner);
         buttonActionSelectionSpinner = (Spinner)findViewById(R.id.buttonActionSelectionSpinner);
 
@@ -212,15 +218,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 if(bluetoothDevices.size() > position) {
                     BluetoothDevice currentBluetoothDevice = bluetoothDevices.get(position);
                     if (currentBluetoothDevice != null) {
-                            currentSelectedBluetoothAddress = currentBluetoothDevice.getAddress();
-                            currentSelectedBluetoothName = currentBluetoothDevice.getName();
                         if(!currentBluetoothDevice.getAddress().equals(currentSelectedBluetoothAddress)) {
                             resetGraph();
+                            setConnectionTime(0);
                         }
-                        //Log.v("BLE DEVICE SELECTION", "Selected device id: " + id);
-                        //Log.v("BLE DEVICE SELECTION", "Selected device index: " + position);
-                        //Log.v("BLE DEVICE SELECTION", "Selected device address: " + currentSelectedBluetoothAddress);
-                        //Log.v("BLE DEVICE SELECTION", "Selected device name: " + currentBluetoothDevice.getName());
+                        currentSelectedBluetoothAddress = currentBluetoothDevice.getAddress();
+                        currentSelectedBluetoothName = currentBluetoothDevice.getName();
                     }
                 }
             }
@@ -442,6 +445,35 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     }
 
+    // -------------------- CONNECTION TIME --------------------
+
+    void setConnectionTime(int timeToSet) {
+
+        currentConnectionTime = timeToSet;
+
+        if(connectionTimeTextView != null) {
+
+            int connectionHours = timeToSet / 3600;
+            int connectionMinutes = timeToSet / 60 - connectionHours * 60;
+            int connectionSeconds = timeToSet - connectionHours * 3600 - connectionMinutes * 60;
+
+            String connectionMinutesString = "";
+            if(connectionMinutes < 10) {
+                connectionMinutesString = "0";
+            }
+            connectionMinutesString += String.valueOf(connectionMinutes);
+
+            String connectionSecondsString = "";
+            if(connectionSeconds < 10) {
+                connectionSecondsString = "0";
+            }
+            connectionSecondsString += String.valueOf(connectionSeconds);
+
+            connectionTimeTextView.setText(connectionHours + ":" + connectionMinutesString + ":" + connectionSecondsString);
+
+        }
+    }
+
     // -------------------- TIMED ACTIONS --------------------
 
     Runnable sendRepeatingPing = new Runnable() {
@@ -483,6 +515,17 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 //Log.v("FILTER", "New filter value is: " + filteredRSSI);
             } finally {
                 rssiFilteringHandler.postDelayed(updateRSSIFilter, RSSI_UPDATE_FILTERING_INTERVAL);
+            }
+        }
+    };
+
+    Runnable updateConnectionTime = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                setConnectionTime(currentConnectionTime + 1);
+            } finally {
+                connectionTimeHandler.postDelayed(updateConnectionTime, 1000);
             }
         }
     };
@@ -538,7 +581,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         bluetoothDeviceSelectionSpinner.setEnabled(false);
 
-        scanLeDevice(false, false);
+        setConnectionTime(-1);
+        updateConnectionTime.run();
+        scanLeDevice(false);
 
     }
 
@@ -553,6 +598,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         bluetoothDeviceSelectionSpinner.setEnabled(true);
 
+        connectionTimeHandler.removeCallbacks(updateConnectionTime);
         rssiValueTextView.setText("---");
         scanLeDevice(true);
 
@@ -595,32 +641,31 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     }
 
-    private void scanLeDevice(final boolean enable) {
-        scanLeDevice(enable, true);
-    }
+    //private void scanLeDevice(final boolean enable) {
+    //    scanLeDevice(enable, true);
+    //}
 
-    private void scanLeDevice(final boolean enable, final boolean disableRunable) {
-        if (enable) {
+    private void scanLeDevice(final boolean enable /*, final boolean disableRunable */) {
+        if (enable && !isScanning) {
             /*
             // Stops scanning after a pre-defined scan period.
             bleHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
+                    isScanning = false;
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
                     invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
             */
-            mScanning = true;
+            isScanning = true;
             connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.scanning));
             mBluetoothAdapter.startLeScan(mLeScanCallback);
             updateRSSIValue.run();
         } else {
-            mScanning = false;
+            isScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
         }
-        invalidateOptionsMenu();
     }
 
     void addBLEDeviceToList(BluetoothDevice bluetoothDevice) {
