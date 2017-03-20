@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import android.os.Vibrator;
-
+//Can you see this push
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- UI --------------------
