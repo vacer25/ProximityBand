@@ -48,8 +48,7 @@ public class BluetoothLeService extends Service {
 
     private Timer mRssiTimer;
 
-
-
+    protected BluetoothGattService mUartService;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
@@ -91,6 +90,7 @@ public class BluetoothLeService extends Service {
                     @Override
                     public void run() {
                         if(mBluetoothGatt != null) {
+                            //Log.v("RSSI", "Reading remote rssi...");
                             mBluetoothGatt.readRemoteRssi();
                         }
                     }
@@ -101,8 +101,7 @@ public class BluetoothLeService extends Service {
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGatt.discoverServices());
+                Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
@@ -118,6 +117,9 @@ public class BluetoothLeService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                mUartService = gatt.getService(UUID.fromString(UUID_SERVICE));
+                BluetoothGattCharacteristic dataCharacteristic = mUartService.getCharacteristic(UUID.fromString(UUID_RX));
+                setCharacteristicNotification(dataCharacteristic, true);
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
@@ -142,7 +144,7 @@ public class BluetoothLeService extends Service {
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                //Log.d(TAG, String.format("BluetoothGatt ReadRssi[%d]", rssi));
+                Log.d(TAG, String.format("BluetoothGatt ReadRssi[%d]", rssi));
                 BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(UUID.randomUUID(), 0, 0);
                 characteristic.setValue(String.valueOf(rssi));
                 broadcastUpdate(ACTION_READ_REMOTE_RSSI, characteristic);

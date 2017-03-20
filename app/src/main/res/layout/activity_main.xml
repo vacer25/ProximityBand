@@ -124,7 +124,8 @@
             android:layout_below="@+id/bluetoothConenctionTextView"
             android:foreground="@drawable/parameter_view_border"
             android:entries="@array/test_ble_devices"
-            android:fadeScrollbars="true" />
+            android:fadeScrollbars="true"
+/>
 
         <Button
             android:text="@string/connect"
