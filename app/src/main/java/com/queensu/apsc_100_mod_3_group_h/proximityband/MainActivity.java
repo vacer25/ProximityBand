@@ -33,6 +33,8 @@ import com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import android.os.Vibrator;
+
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- UI --------------------
@@ -422,6 +424,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     }
 
     void setRSSIValue(int rssiValue, boolean updateGraph) {
+        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if(rssiValueTextView != null) {
             String currentRSSIText = String.format(Locale.ENGLISH, "%.1f", filteredRSSI) + getResources().getString(R.string.db);
             rssiValueTextView.setText(currentRSSIText);
@@ -437,11 +440,17 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             if(canActivateAlarmNow) {
                 sendBluetoothData("X"); // Alarm of
             }
+            // Get instance of Vibrator from current Context
+
+// Vibrate for 400 milliseconds
+            long[] pattern = {0,200,50,200};
+            v.vibrate(pattern, 0);
             rssiValueTextView.setTextColor(Color.RED);
         }
         else {
             sendBluetoothData("x"); // Alarm off
             rssiValueTextView.setTextColor(Color.BLACK);
+            v.cancel();
         }
     }
 
