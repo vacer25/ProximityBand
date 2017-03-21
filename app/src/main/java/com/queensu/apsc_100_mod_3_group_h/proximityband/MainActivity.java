@@ -1,13 +1,16 @@
 package com.queensu.apsc_100_mod_3_group_h.proximityband;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -18,8 +21,11 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.service.notification.StatusBarNotification;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -35,11 +41,11 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
-import java.util.UUID;
 
 import android.os.Vibrator;
-//Can you see this push
+
 public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     // -------------------- UI --------------------
@@ -64,16 +70,35 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private BluetoothLeService mBluetoothLeService;
     private BluetoothAdapter mBluetoothAdapter;
-    private boolean isScanning;
+    //private boolean isScanning;
     private Handler pingHandler;
     private Handler connectionTimeHandler;
     private Handler rssiHandler;
     private Handler rssiFilteringHandler;
 
-    //final BluetoothGattCharacteristic bluetoothRXCharacteristic = new BluetoothGattCharacteristic(UUID.fromString(BluetoothLeService.UUID_RX), 0, 16);
+    // -------------------- VIBRATION --------------------
 
-    // Get instance of Vibrator from current Context
     Vibrator vibrator;
+
+    // -------------------- NOTIFCATIONS --------------------
+
+    private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
+    private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
+    private boolean isEnabledNLS = false;
+
+    ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
+        add("com.android.mms"); // Messages
+        add("com.android.email"); // Email
+    }};
+    ArrayList<String> greenNotificationGroup = new ArrayList<String>() {{
+        add("com.queensu.apsc_100_mod_3_group_h.proximityband"); // Proximity Band
+        add("com.android.calendar"); // Calendar
+        add("com.android.phone"); // Phone
+    }};
+    ArrayList<String> blueNotificationGroup = new ArrayList<String>() {{
+        add("com.facebook.orca"); // Messenger
+        add("com.skype.raider"); // Skype
+    }};
 
     // -------------------- BLE DEVICES VARIABLES --------------------
 
@@ -105,7 +130,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- CONSTANTS --------------------
 
-    private static final long SCAN_PERIOD = 30000; // ms
     private static final long PING_INTERVAL = 250; // ms
     public static int RSSI_GRAPH_UPDATE_INTERVAL = 250;
     public static int RSSI_SCAN_INTERVAL = 1000;
@@ -160,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         getPreferences();
         checkBLECompatibility();
         getActivityViewReferences();
+        setupNotificationListener();
 
         updateRSSIFilter.run();
 
@@ -171,7 +196,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Fullscreen
         HelperFunctions.hideActionBarAndStatusBar(this);
+
+        // BLE Connection
         enableBluetooth();
 
         if(!isConnected) {
@@ -180,7 +209,14 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
 
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        //registerReceiver(mGattUpdateReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+
+
+        // Notification Listener Access
+        isEnabledNLS = NLSIsEnabled();
+        Log.v("NLS", "isEnabledNLS = " + isEnabledNLS);
+        if (!isEnabledNLS) {
+            showConfirmDialog();
+        }
 
     }
 
@@ -337,8 +373,20 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- USER INTERACTION --------------------
 
+    @SuppressLint("InlinedApi")
+    @TargetApi(19)
     public void onSetButtonActionClicked(View v) {
-        //HelperFunctions.vibrate(this, 50);
+
+        /*
+        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        NotificationCompat.Builder ncomp = new NotificationCompat.Builder(this);
+        ncomp.setContentTitle("My Notification");
+        ncomp.setContentText("Notification Listener Service Example");
+        ncomp.setTicker("Notification Listener Service Example");
+        ncomp.setSmallIcon(R.drawable.proximity_band_logo);
+        ncomp.setAutoCancel(true);
+        nManager.notify((int) System.currentTimeMillis(), ncomp.build());
+        */
 
         long selection = buttonActionSelectionSpinner.getSelectedItemId();
 
@@ -403,7 +451,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     }
 
     public void onSetBluetoothDeviceClicked(View v) {
-        //HelperFunctions.vibrate(this, 50);
+
         if(mBluetoothLeService != null) {
             if(!isConnected) {
                 if(currentSelectedBluetoothAddress.contains(":")){
@@ -479,6 +527,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- RSSI VALUE --------------------
 
+    @SuppressWarnings("unused")
     void setRSSIValue(String rssiToSet, boolean updateGraph) {
 
         try {
@@ -505,18 +554,22 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         if(filteredRSSI < rssiThreshold) {
             if(canActivateAlarmNow) {
-                isOutOfRange = true;
                 sendBluetoothData("X"); // Alarm on
                 vibrator.vibrate(ALARM_VIBRATE_PATTERN, 0);
+                isOutOfRange = true;
             }
-            rssiValueTextView.setTextColor(Color.RED);
+            if(rssiValueTextView != null) {
+                rssiValueTextView.setTextColor(Color.RED);
+            }
         }
         else {
             if(isOutOfRange) {
-                isOutOfRange = false;
                 sendBluetoothData("x"); // Alarm off
-                rssiValueTextView.setTextColor(Color.BLACK);
                 vibrator.cancel();
+                isOutOfRange = false;
+            }
+            if(rssiValueTextView != null) {
+                rssiValueTextView.setTextColor(Color.BLACK);
             }
         }
 
@@ -558,8 +611,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         public void run() {
             try {
                 sendBluetoothData("!");
-                //mBluetoothLeService.readCharacteristic(bluetoothRXCharacteristic);
-                //mBluetoothLeService.readCustomCharacteristic();
             } finally {
                 pingHandler.postDelayed(sendRepeatingPing, PING_INTERVAL);
             }
@@ -608,6 +659,113 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
         }
     };
+
+    // -------------------- NOTIFCATIONS --------------------
+
+    private void setupNotificationListener() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(NotificationMonitor.ACTION_NOTIFICATION_EVENT);
+        registerReceiver(notificationCallbackReceiver, intentFilter);
+        updateNotificationsList();
+    }
+
+    private final BroadcastReceiver notificationCallbackReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (NotificationMonitor.ACTION_NOTIFICATION_EVENT.equals(action)) {
+                updateNotificationsList();
+            }
+        }
+    };
+
+    private void updateNotificationsList() {
+        if (isEnabledNLS) {
+
+            StatusBarNotification[] currentNotifications = NotificationMonitor.getCurrentNotifications();
+            if (currentNotifications == null) {
+                sendBluetoothData("ijk"); // Turn off all flashing
+            }
+            else {
+
+                ArrayList<String> currentNotificationsPackageNames = new ArrayList<>();
+                for (StatusBarNotification currentStatusBarNotification : currentNotifications) {
+                    currentNotificationsPackageNames.add(currentStatusBarNotification.getPackageName());
+                }
+
+                // At least one notification from the red group
+                if(!Collections.disjoint(currentNotificationsPackageNames, redNotificationGroup)) {
+                    sendBluetoothData("I");
+                }
+                else {
+                    sendBluetoothData("i");
+                }
+
+                // At least one notification from the green group
+                if(!Collections.disjoint(currentNotificationsPackageNames, greenNotificationGroup)) {
+                    sendBluetoothData("J");
+                }
+                else {
+                    sendBluetoothData("j");
+                }
+
+                // At least one notification from the blue group
+                if(!Collections.disjoint(currentNotificationsPackageNames, blueNotificationGroup)) {
+                    sendBluetoothData("K");
+                }
+                else {
+                    sendBluetoothData("k");
+                }
+
+            }
+        }else {
+            openNotificationAccess();
+            //mTextView.setText("Please Enable Notification Access");
+        }
+    }
+
+    private void openNotificationAccess() {
+        startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS));
+    }
+
+    private void showConfirmDialog() {
+        new AlertDialog.Builder(this)
+                .setMessage("Please enable NotificationMonitor access")
+                .setTitle("Notification Access")
+                .setIconAttribute(android.R.attr.alertDialogIcon)
+                .setCancelable(true)
+                .setPositiveButton(android.R.string.ok,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                openNotificationAccess();
+                            }
+                        })
+                .setNegativeButton(android.R.string.cancel,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // do nothing
+                            }
+                        })
+                .create().show();
+    }
+
+    private boolean NLSIsEnabled() {
+        String pkgName = getPackageName();
+        final String flat = Settings.Secure.getString(getContentResolver(),
+                ENABLED_NOTIFICATION_LISTENERS);
+        if (!TextUtils.isEmpty(flat)) {
+            final String[] names = flat.split(":");
+            for (String currentName : names) {
+                final ComponentName cn = ComponentName.unflattenFromString(currentName);
+                if (cn != null) {
+                    if (TextUtils.equals(pkgName, cn.getPackageName())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     // -------------------- BLUETOOTH CONNECTION --------------------
 
@@ -781,12 +939,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 }
             }, SCAN_PERIOD);
             */
-            isScanning = true;
+            //isScanning = true;
             connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.scanning));
             mBluetoothAdapter.startLeScan(mLeScanCallback);
             updateRSSIValue.run();
         } else {
-            isScanning = false;
+            //isScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
         }
     }
@@ -854,9 +1012,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 setUpDisconnectFromBluetooth();
                 //invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-                //displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 processReceivedBluetoothData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
