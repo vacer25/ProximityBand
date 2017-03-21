@@ -2,11 +2,16 @@ package com.queensu.apsc_100_mod_3_group_h.proximityband;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Vibrator;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 /**
  * Created by Admin on 3/6/2017.
@@ -14,6 +19,17 @@ import android.widget.Toast;
  */
 
 public class HelperFunctions {
+
+    private static ArrayList<String> includedPackages = new ArrayList<String>() {{
+        add("com.android.mms"); // Messages
+        add("com.android.email"); // Email
+        add("com.android.calendar"); // Calendar
+        add("com.android.phone"); // Phone
+    }};
+
+    public static boolean isSystemPackage(PackageInfo pkgInfo) {
+        return (((pkgInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) && !includedPackages.contains(pkgInfo.packageName)) ? true : false;
+    }
 
     static void vibrate(Activity activity, int time) {
         Vibrator v = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);

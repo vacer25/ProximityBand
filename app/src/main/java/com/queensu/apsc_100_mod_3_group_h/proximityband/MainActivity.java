@@ -15,7 +15,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.Handler;
@@ -42,11 +45,12 @@ import com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import android.os.Vibrator;
 
-public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
+public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener, MultiSelectionSpinner.OnMultipleItemsSelectedListener {
 
     // -------------------- UI --------------------
 
@@ -65,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     Spinner buttonActionSelectionSpinner;
 
     GraphView rssiValueGraph;
+
+    MultiSelectionSpinner redNotificationGroupMultiSelectionSpinner;
+    MultiSelectionSpinner greenNotificationGroupMultiSelectionSpinner;
+    MultiSelectionSpinner blueNotificationGroupMultiSelectionSpinner;
 
     // -------------------- BLE OBJECTS --------------------
 
@@ -85,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
     private boolean isEnabledNLS = false;
+
+    ArrayList<String> packageNames = new ArrayList<>();
 
     ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
@@ -209,7 +219,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
 
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
 
         // Notification Listener Access
         isEnabledNLS = NLSIsEnabled();
@@ -338,6 +347,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         filteringSeekBar.setProgress((int)(HelperFunctions.map(rssiFilteringSmoothness, (float)MIN_FILTERING, (float)MAX_FILTERING, 0f, 100f)));
         rssiFilter.R = rssiFilteringSmoothness;
         setFilteringValueTextView(rssiFilter.R);
+
+        redNotificationGroupMultiSelectionSpinner = (MultiSelectionSpinner)findViewById(R.id.redNotificationGroupMultiSelectionSpinner);
+        greenNotificationGroupMultiSelectionSpinner = (MultiSelectionSpinner)findViewById(R.id.greenNotificationGroupMultiSelectionSpinner);
+        blueNotificationGroupMultiSelectionSpinner = (MultiSelectionSpinner)findViewById(R.id.blueNotificationGroupMultiSelectionSpinner);
 
         // Get instance of Vibrator from current Context
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -468,6 +481,34 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
         }
 
+    }
+
+    @Override
+    public void selectedIndices(MultiSelectionSpinner multiSelectionSpinner, List<Integer> indices) {
+        if(multiSelectionSpinner == redNotificationGroupMultiSelectionSpinner) {
+            redNotificationGroup.clear();
+            for(Integer currentIndex : indices) {
+                redNotificationGroup.add(packageNames.get(currentIndex));
+            }
+        }
+        else if(multiSelectionSpinner == greenNotificationGroupMultiSelectionSpinner) {
+            greenNotificationGroup.clear();
+            for(Integer currentIndex : indices) {
+                greenNotificationGroup.add(packageNames.get(currentIndex));
+            }
+        }
+        else if(multiSelectionSpinner == blueNotificationGroupMultiSelectionSpinner) {
+            blueNotificationGroup.clear();
+            for(Integer currentIndex : indices) {
+                blueNotificationGroup.add(packageNames.get(currentIndex));
+            }
+        }
+
+        updateNotificationsList();
+    }
+
+    @Override
+    public void selectedStrings(MultiSelectionSpinner multiSelectionSpinner, List<String> strings) {
     }
 
     // -------------------- THRESHOLD SEEK BAR --------------------
@@ -660,13 +701,72 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     };
 
-    // -------------------- NOTIFCATIONS --------------------
+    // -------------------- NOTIFICATIONS --------------------
 
     private void setupNotificationListener() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(NotificationMonitor.ACTION_NOTIFICATION_EVENT);
         registerReceiver(notificationCallbackReceiver, intentFilter);
+
+        // Notification Listener Access
+        isEnabledNLS = NLSIsEnabled();
+        Log.v("NLS", "isEnabledNLS = " + isEnabledNLS);
+        if (!isEnabledNLS) {
+            showConfirmDialog();
+        }
+
         updateNotificationsList();
+
+        final PackageManager packageManager = getPackageManager();
+        List<PackageInfo> packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
+        ArrayList<String> appNames = new ArrayList<>();
+
+        ArrayList<String> redNotificationGroupNames = new ArrayList<>();
+        ArrayList<String> greenNotificationGroupNames = new ArrayList<>();
+        ArrayList<String> blueNotificationGroupNames = new ArrayList<>();
+
+        for (PackageInfo packageInfo : packages) {
+            if(!HelperFunctions.isSystemPackage(packageInfo)) {
+
+                ApplicationInfo applicationInfo;
+                try {
+                    applicationInfo = packageManager.getApplicationInfo( packageInfo.packageName, 0);
+                } catch (final PackageManager.NameNotFoundException e) {
+                    applicationInfo = null;
+                }
+                String applicationName = (String) (applicationInfo != null ? packageManager.getApplicationLabel(applicationInfo) : "(unknown)");
+                appNames.add(applicationName);
+                packageNames.add(packageInfo.packageName);
+
+                if(redNotificationGroup.contains(packageInfo.packageName)) {
+                    redNotificationGroupNames.add(applicationName);
+                }
+                if(greenNotificationGroup.contains(packageInfo.packageName)) {
+                    greenNotificationGroupNames.add(applicationName);
+                }
+                if(blueNotificationGroup.contains(packageInfo.packageName)) {
+                    blueNotificationGroupNames.add(applicationName);
+                }
+
+            }
+        }
+
+        redNotificationGroupMultiSelectionSpinner.setItems(appNames);
+        greenNotificationGroupMultiSelectionSpinner.setItems(appNames);
+        blueNotificationGroupMultiSelectionSpinner.setItems(appNames);
+
+        redNotificationGroupMultiSelectionSpinner.setListener(this);
+        greenNotificationGroupMultiSelectionSpinner.setListener(this);
+        blueNotificationGroupMultiSelectionSpinner.setListener(this);
+
+        redNotificationGroupMultiSelectionSpinner.setSelection(redNotificationGroupNames);
+        greenNotificationGroupMultiSelectionSpinner.setSelection(greenNotificationGroupNames);
+        blueNotificationGroupMultiSelectionSpinner.setSelection(blueNotificationGroupNames);
+
+        redNotificationGroupMultiSelectionSpinner.setTitle("Pick Red Notification Group");
+        greenNotificationGroupMultiSelectionSpinner.setTitle("Pick Green Notification Group");
+        blueNotificationGroupMultiSelectionSpinner.setTitle("Pick Blue Notification Group");
+
     }
 
     private final BroadcastReceiver notificationCallbackReceiver = new BroadcastReceiver() {

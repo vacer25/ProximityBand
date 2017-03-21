@@ -237,5 +237,44 @@
             android:foreground="@drawable/parameter_view_border"
             android:background="@drawable/button_background" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="false"
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentBottom="false"
+            android:layout_below="@+id/buttonActionSelectionSpinner"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="15dp"
+            android:gravity="fill_horizontal">
+
+            <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
+                android:id="@+id/redNotificationGroupMultiSelectionSpinner"
+                android:layout_width="0dp"
+                android:layout_height="25dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorRed"
+                android:spinnerMode="dialog"
+                android:hint="Red Notification Group">
+            </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
+
+            <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
+                android:id="@+id/greenNotificationGroupMultiSelectionSpinner"
+                android:layout_width="0dp"
+                android:layout_height="25dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorGreen">
+            </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
+
+            <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
+                android:id="@+id/blueNotificationGroupMultiSelectionSpinner"
+                android:layout_width="0dp"
+                android:layout_height="25dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorBlue">
+            </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
+
+        </LinearLayout>
+
     </RelativeLayout>
 </RelativeLayout>
