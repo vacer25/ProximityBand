@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private static final int RSSI_GRAPH_NUMBER_OF_DATA_POINTS = 250;
 
-    private static final double MAX_FILTERING = 0.01;
+    private static final double MAX_FILTERING = 0.005;
     private static final double MIN_FILTERING = 0.0001;
 
     private static final int MAX_RSSI = -30;
@@ -331,12 +331,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                     if (currentBluetoothDevice != null) {
                         if(!currentBluetoothDevice.getAddress().equals(currentSelectedBluetoothAddress)) {
                             resetGraph();
-                            setConnectionTime(0);
                         }
                         currentSelectedBluetoothAddress = currentBluetoothDevice.getAddress();
                         currentSelectedBluetoothName = currentBluetoothDevice.getName();
-                        prefs.edit().putString(PREF_BLE_ADDRESS, currentSelectedBluetoothAddress).apply();
-                        prefs.edit().putString(PREF_BLE_NAME, currentSelectedBluetoothName).apply();
                     }
                 }
             }
@@ -477,6 +474,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             if(!isConnected) {
                 if(currentSelectedBluetoothAddress.contains(":")){
                     //Log.vibrator("ACTION", "Attempting to connect...");
+
+                    prefs.edit().putString(PREF_BLE_ADDRESS, currentSelectedBluetoothAddress).apply();
+                    prefs.edit().putString(PREF_BLE_NAME, currentSelectedBluetoothName).apply();
+
                     connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connecting) + " " + currentSelectedBluetoothName + "...");
                     mBluetoothLeService.connect(currentSelectedBluetoothAddress);
                     //Log.d("BLE CONNECTION", "Connect request result: " + result);
@@ -945,10 +946,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 Log.e("BLE CONNECTION", "Unable to initialize Bluetooth");
                 finish();
             }
-            // Automatically connects to the device upon successful start-up initialization.
-            if(currentSelectedBluetoothAddress.contains(":")) {
-                mBluetoothLeService.connect(currentSelectedBluetoothAddress);
-            }
+            attemptConnectionToBluetoothDevice();
         }
 
         @Override
@@ -958,14 +956,20 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     };
 
+    void attemptConnectionToBluetoothDevice() {
+        // Automatically connects to the device upon successful start-up initialization.
+        if(currentSelectedBluetoothAddress.contains(":")) {
+            connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connecting) + " " + currentSelectedBluetoothName + "...");
+            mBluetoothLeService.connect(currentSelectedBluetoothAddress);
+        }
+    }
+
     void setUpConnectToBluetooth() {
 
         isConnected = true;
         sendRepeatingPing.run();
         connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connected) + " " + currentSelectedBluetoothName);
         connectionButton.setText(R.string.disconnect);
-
-        //mBluetoothLeService.setCharacteristicNotification(bluetoothRXCharacteristic, true);
 
         ArrayList<String> bluetoothDevicesNames = new ArrayList<>();
         bluetoothDevicesNames.add(currentSelectedBluetoothName);
@@ -982,7 +986,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     void setUpDisconnectFromBluetooth() {
 
-        currentRSSI = 0;
+        //currentRSSI = 0;
 
         isConnected = false;
         pingHandler.removeCallbacks(sendRepeatingPing);
