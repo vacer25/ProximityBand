@@ -15,10 +15,10 @@ import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 import android.util.Log;
 
-public class NotificationMonitor extends NotificationListenerService {
+public class NotificationMonitorService extends NotificationListenerService {
 
     private static final String TAG = "NLS";
-    private static final String TAG_PRE = "[" + NotificationMonitor.class.getSimpleName() + "] ";
+    private static final String TAG_PRE = "[" + NotificationMonitorService.class.getSimpleName() + "] ";
     private static final int EVENT_UPDATE_CURRENT_NOS = 0;
     public static final String ACTION_NLS_CONTROL = "com.queensu.apsc_100_mod_3_group_h.proximityband.NLSCONTROL";
     public static final String ACTION_NOTIFICATION_EVENT = "com.queensu.apsc_100_mod_3_group_h.proximityband.NLSCONTROL_POSTED";
@@ -27,7 +27,6 @@ public class NotificationMonitor extends NotificationListenerService {
     public static StatusBarNotification mPostedNotification;
     public static StatusBarNotification mRemovedNotification;
     private CancelNotificationReceiver mReceiver = new CancelNotificationReceiver();
-    // String a;
 
     private Handler mMonitorHandler = new Handler() {
         @Override
@@ -90,12 +89,16 @@ public class NotificationMonitor extends NotificationListenerService {
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
-        updateCurrentNotifications();
+        //updateCurrentNotifications();
+        ///*
+        if(updateCurrentNotifications()) {
+            sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
+        }
+        //*/
         logNLS("onNotificationPosted...");
         logNLS("have " + mCurrentNotificationsCounts + " active notifications");
         mPostedNotification = sbn;
-
-        sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
+        //sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
 
         /*
          * Bundle extras = sbn.getNotification().extras; String
@@ -119,27 +122,50 @@ public class NotificationMonitor extends NotificationListenerService {
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
-        updateCurrentNotifications();
+        //updateCurrentNotifications();
+        ///*
+        if(updateCurrentNotifications()) {
+            sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
+        }
+        //*/
         logNLS("removed...");
         logNLS("have " + mCurrentNotificationsCounts + " active notifications");
         mRemovedNotification = sbn;
-
-        sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
-
+        //sendBroadcast(new Intent(ACTION_NOTIFICATION_EVENT));
     }
 
-    private void updateCurrentNotifications() {
+    public boolean updateCurrentNotifications() {
+        boolean newNotifications = false;
         try {
+            logNLS("Updating notifications...");
             StatusBarNotification[] activeNos = getActiveNotifications();
             if (mCurrentNotifications.size() == 0) {
                 mCurrentNotifications.add(null);
+                newNotifications = true;
             }
+            ///*
+            else {
+                StatusBarNotification[] prev_activeNos = mCurrentNotifications.get(0);
+                if(activeNos.length != prev_activeNos.length) {
+                    newNotifications = true;
+                }
+                else {
+                    for (int i = 0; i < activeNos.length; i++) {
+                        if(!activeNos[i].getPackageName().equals(prev_activeNos[i].getPackageName())){
+                            newNotifications = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            //*/
             mCurrentNotifications.set(0, activeNos);
             mCurrentNotificationsCounts = activeNos.length;
         } catch (Exception e) {
             logNLS("Should not be here!!");
             e.printStackTrace();
         }
+        return newNotifications;
     }
 
     public static StatusBarNotification[] getCurrentNotifications() {
@@ -153,8 +179,6 @@ public class NotificationMonitor extends NotificationListenerService {
     private static void logNLS(Object object) {
         Log.i(TAG, TAG_PRE + object);
     }
-
-
 
 }
 

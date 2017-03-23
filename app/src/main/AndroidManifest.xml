@@ -34,7 +34,7 @@
 
         <service android:name="com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService" android:enabled="true"/>
 
-        <service android:name="com.queensu.apsc_100_mod_3_group_h.proximityband.NotificationMonitor"
+        <service android:name="com.queensu.apsc_100_mod_3_group_h.proximityband.NotificationMonitorService"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" >
             <intent-filter>

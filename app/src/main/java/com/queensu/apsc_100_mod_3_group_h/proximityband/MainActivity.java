@@ -15,10 +15,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.Handler;
@@ -514,7 +512,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
 
         PreferenceSettings.setNotificationSettings();
-        updateNotificationsList();
+        updateNotificationsList(true);
     }
 
     @Override
@@ -715,17 +713,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private void setupNotificationListener() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(NotificationMonitor.ACTION_NOTIFICATION_EVENT);
+        intentFilter.addAction(NotificationMonitorService.ACTION_NOTIFICATION_EVENT);
         registerReceiver(notificationCallbackReceiver, intentFilter);
-
-        // Notification Listener Access
-        isEnabledNLS = NLSIsEnabled();
-        Log.v("NLS", "isEnabledNLS = " + isEnabledNLS);
-        if (!isEnabledNLS) {
-            showConfirmDialog();
-        }
-
-        updateNotificationsList();
 
         final PackageManager packageManager = getPackageManager();
         List<PackageInfo> packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
@@ -791,16 +780,23 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (NotificationMonitor.ACTION_NOTIFICATION_EVENT.equals(action)) {
+            if (NotificationMonitorService.ACTION_NOTIFICATION_EVENT.equals(action)) {
                 updateNotificationsList();
             }
         }
     };
 
+    private void updateNotificationsList(boolean forceUpdate) {
+        if(forceUpdate) {
+            NotificationMonitorService.mCurrentNotifications.clear();
+        }
+        updateNotificationsList();
+    }
+
     private void updateNotificationsList() {
         if (isEnabledNLS) {
 
-            StatusBarNotification[] currentNotifications = NotificationMonitor.getCurrentNotifications();
+            StatusBarNotification[] currentNotifications = NotificationMonitorService.getCurrentNotifications();
             if (currentNotifications == null) {
                 sendBluetoothData("ijk"); // Turn off all flashing
             }
@@ -813,7 +809,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
                 // At least one notification from the red group
                 if(!Collections.disjoint(currentNotificationsPackageNames, redNotificationGroup)) {
-                    sendBluetoothData("I");
+                    sendBluetoothData("I1"); // Flash red LED, short motor vibration
                 }
                 else {
                     sendBluetoothData("i");
@@ -821,7 +817,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
                 // At least one notification from the green group
                 if(!Collections.disjoint(currentNotificationsPackageNames, greenNotificationGroup)) {
-                    sendBluetoothData("J");
+                    sendBluetoothData("J1"); // Flash green LED, short motor vibration
                 }
                 else {
                     sendBluetoothData("j");
@@ -829,7 +825,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
                 // At least one notification from the blue group
                 if(!Collections.disjoint(currentNotificationsPackageNames, blueNotificationGroup)) {
-                    sendBluetoothData("K");
+                    sendBluetoothData("K1"); // Flash blue LED, short motor vibration
                 }
                 else {
                     sendBluetoothData("k");
@@ -837,7 +833,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
             }
         }else {
-            openNotificationAccess();
+            //openNotificationAccess();
             //mTextView.setText("Please Enable Notification Access");
         }
     }
@@ -848,7 +844,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private void showConfirmDialog() {
         new AlertDialog.Builder(this)
-                .setMessage("Please enable NotificationMonitor access")
+                .setMessage("Please enable " + getResources().getString(R.string.app_name) + " access")
                 .setTitle("Notification Access")
                 .setIconAttribute(android.R.attr.alertDialogIcon)
                 .setCancelable(true)
@@ -981,6 +977,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         setConnectionTime(-1);
         updateConnectionTime.run();
         scanLeDevice(false);
+
+        updateNotificationsList(true);
 
     }
 
