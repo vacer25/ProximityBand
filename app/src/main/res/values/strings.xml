@@ -13,7 +13,7 @@
     <string name="disconnect">Disconnect</string>
     <string name="disconnected">disconnected</string>
     <string name="disconnecting">disconnecting from</string>
-    <string name="scanning">Scanning...</string>
+    <string name="scanning">Scanning for BLE devices&#8230;</string>
 
     <!-- LABELS -->
 
@@ -24,6 +24,9 @@
     <string name="db">db</string>
     <string name="connection_time">Connection time:</string>
     <string name="notification_groups">Notification Groups</string>
+    <string name="alarm_dialog_title">ALARM!</string>
+    <string name="alarm_dialog_message_out_of_range">The Proximity Band is out of range!</string>
+    <string name="alarm_dialog_message_lost_connection">Lost connection to the Proximity Band!</string>
 
     <!-- BUTTON LABELS -->
 
@@ -33,7 +36,7 @@
 
     <!-- ARRAYS -->
 
-    <string-array name="test_ble_devices">
+    <string-array name="none_ble_devices">
         <item>None</item>
     </string-array>
 
