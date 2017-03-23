@@ -45,6 +45,7 @@ import com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -94,18 +95,19 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
     private boolean isEnabledNLS = false;
 
-    ArrayList<String> packageNames = new ArrayList<>();
+    public static ArrayList<String> packageNames = new ArrayList<>();
+    public static ArrayList<String> packageAppNames = new ArrayList<>();
 
-    ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
+    public static ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
         add("com.android.email"); // Email
     }};
-    ArrayList<String> greenNotificationGroup = new ArrayList<String>() {{
+    public static ArrayList<String> greenNotificationGroup = new ArrayList<String>() {{
         add("com.queensu.apsc_100_mod_3_group_h.proximityband"); // Proximity Band
         add("com.android.calendar"); // Calendar
         add("com.android.phone"); // Phone
     }};
-    ArrayList<String> blueNotificationGroup = new ArrayList<String>() {{
+    public static ArrayList<String> blueNotificationGroup = new ArrayList<String>() {{
         add("com.facebook.orca"); // Messenger
         add("com.skype.raider"); // Skype
     }};
@@ -170,13 +172,17 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- PREFERENCES --------------------
 
-    SharedPreferences prefs;
+    public static SharedPreferences prefs;
 
     String PREF_BLE_ADDRESS = "Bluetooth_Address";
     String PREF_BLE_NAME = "Bluetooth_Name";
 
     String PREF_FILTERING = "Filtering_Smoothness";
     String PREF_THRESHOLD = "RSSI_Threshold";
+
+    public static String PREF_RED_NOTIFICATIONS = "Red_Notifications";
+    public static String PREF_GREEN_NOTIFICATIONS = "Green_Notifications";
+    public static String PREF_BLUE_NOTIFICATIONS = "Blue_Notifications";
 
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
@@ -276,6 +282,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         setThresholdValue(rssiThreshold);
         setFilteringValueTextView(rssiFilteringSmoothness);
+
+        PreferenceSettings.getNotificationSettings();
 
     }
 
@@ -504,6 +512,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
         }
 
+        PreferenceSettings.setNotificationSettings();
         updateNotificationsList();
     }
 
@@ -719,41 +728,49 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         final PackageManager packageManager = getPackageManager();
         List<PackageInfo> packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
-        ArrayList<String> appNames = new ArrayList<>();
+
+        Collections.sort(packages, new Comparator<PackageInfo>() {
+            @Override
+            public int compare(PackageInfo o1, PackageInfo o2) {
+                String package1Name = (String)(o1.applicationInfo != null ? packageManager.getApplicationLabel(o1.applicationInfo) : "(unknown)");
+                String package2Name = (String)(o2.applicationInfo != null ? packageManager.getApplicationLabel(o2.applicationInfo) : "(unknown)");
+                return package1Name.toUpperCase().compareTo(package2Name.toUpperCase());
+            }
+        });
 
         ArrayList<String> redNotificationGroupNames = new ArrayList<>();
         ArrayList<String> greenNotificationGroupNames = new ArrayList<>();
         ArrayList<String> blueNotificationGroupNames = new ArrayList<>();
 
+        packageAppNames.clear();
+
         for (PackageInfo packageInfo : packages) {
             if(!HelperFunctions.isSystemPackage(packageInfo)) {
 
-                ApplicationInfo applicationInfo;
-                try {
-                    applicationInfo = packageManager.getApplicationInfo( packageInfo.packageName, 0);
-                } catch (final PackageManager.NameNotFoundException e) {
-                    applicationInfo = null;
+                String packageName = packageInfo.packageName;
+                String applicationName = (String) (packageInfo.applicationInfo != null ? packageManager.getApplicationLabel(packageInfo.applicationInfo) : "(unknown)");
+                if(applicationName.trim().isEmpty()) {
+                    continue;
                 }
-                String applicationName = (String) (applicationInfo != null ? packageManager.getApplicationLabel(applicationInfo) : "(unknown)");
-                appNames.add(applicationName);
-                packageNames.add(packageInfo.packageName);
+                packageAppNames.add(applicationName);
+                packageNames.add(packageName);
 
-                if(redNotificationGroup.contains(packageInfo.packageName)) {
+                if(redNotificationGroup.contains(packageName)) {
                     redNotificationGroupNames.add(applicationName);
                 }
-                if(greenNotificationGroup.contains(packageInfo.packageName)) {
+                if(greenNotificationGroup.contains(packageName)) {
                     greenNotificationGroupNames.add(applicationName);
                 }
-                if(blueNotificationGroup.contains(packageInfo.packageName)) {
+                if(blueNotificationGroup.contains(packageName)) {
                     blueNotificationGroupNames.add(applicationName);
                 }
 
             }
         }
 
-        redNotificationGroupMultiSelectionSpinner.setItems(appNames);
-        greenNotificationGroupMultiSelectionSpinner.setItems(appNames);
-        blueNotificationGroupMultiSelectionSpinner.setItems(appNames);
+        redNotificationGroupMultiSelectionSpinner.setItems(packageAppNames);
+        greenNotificationGroupMultiSelectionSpinner.setItems(packageAppNames);
+        blueNotificationGroupMultiSelectionSpinner.setItems(packageAppNames);
 
         redNotificationGroupMultiSelectionSpinner.setListener(this);
         greenNotificationGroupMultiSelectionSpinner.setListener(this);

@@ -100,7 +100,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/bottomLayout"
         android:background="@drawable/parameter_view_border"
-        android:paddingBottom="25dp"
+        android:paddingBottom="15dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true">
 
@@ -110,13 +110,12 @@
             android:text="@string/bluetooth_connection"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
+            android:layout_marginTop="15dp"
             android:id="@+id/bluetoothConenctionTextView"
             android:layout_alignStart="@+id/bluetoothDeviceSelectionSpinner" />
 
         <Spinner
             android:layout_width="match_parent"
-            android:layout_height="50dp"
             android:id="@+id/bluetoothDeviceSelectionSpinner"
             android:layout_marginRight="10dp"
             android:layout_marginLeft="10dp"
@@ -125,7 +124,7 @@
             android:foreground="@drawable/parameter_view_border"
             android:entries="@array/test_ble_devices"
             android:fadeScrollbars="true"
-/>
+            android:layout_height="35dp" />
 
         <Button
             android:text="@string/connect"
@@ -148,7 +147,7 @@
             android:id="@+id/senstitivityTextView"
             android:layout_below="@+id/bluetoothDeviceSelectionSpinner"
             android:layout_alignStart="@+id/bluetoothDeviceSelectionSpinner"
-            android:layout_marginTop="15dp" />
+            android:layout_marginTop="10dp" />
 
         <SeekBar
             android:layout_width="wrap_content"
@@ -179,7 +178,7 @@
             android:id="@+id/filteringTextView"
             android:layout_below="@+id/thresholdSeekBar"
             android:layout_alignStart="@+id/thresholdSeekBar"
-            android:layout_marginTop="15dp" />
+            android:layout_marginTop="10dp" />
 
         <SeekBar
             android:layout_width="wrap_content"
@@ -209,12 +208,11 @@
             android:layout_height="wrap_content"
             android:id="@+id/buttonActionTextView"
             android:layout_below="@+id/filteringSeekBar"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="10dp"
             android:layout_alignStart="@+id/thresholdSeekBar" />
 
         <Spinner
             android:layout_width="match_parent"
-            android:layout_height="50dp"
             android:id="@+id/buttonActionSelectionSpinner"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
@@ -223,7 +221,8 @@
             android:layout_toStartOf="@+id/setButtonActionButton"
             android:foreground="@drawable/parameter_view_border"
             android:entries="@array/demo_actions"
-            android:gravity="center_vertical|start" />
+            android:gravity="center_vertical|start"
+            android:layout_height="35dp" />
 
         <Button
             android:text="@string/set"
@@ -237,25 +236,37 @@
             android:foreground="@drawable/parameter_view_border"
             android:background="@drawable/button_background" />
 
+        <TextView
+            android:text="@string/notification_groups"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/notificationsLabelTextView"
+            android:layout_below="@+id/buttonActionSelectionSpinner"
+            android:layout_marginTop="10dp"
+            android:layout_alignStart="@+id/thresholdSeekBar"
+            android:layout_marginBottom="5dp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="false"
             android:layout_alignParentEnd="false"
             android:layout_alignParentBottom="false"
-            android:layout_below="@+id/buttonActionSelectionSpinner"
+            android:layout_below="@+id/notificationsLabelTextView"
             android:layout_marginStart="15dp"
             android:layout_marginEnd="15dp"
-            android:gravity="fill_horizontal">
+            android:gravity="fill_horizontal"
+            android:id="@+id/notificationGroupHolderLinearLayout">
 
             <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
                 android:id="@+id/redNotificationGroupMultiSelectionSpinner"
                 android:layout_width="0dp"
                 android:layout_height="25dp"
                 android:layout_weight="1"
-                android:backgroundTint="@color/colorRed"
-                android:spinnerMode="dialog"
-                android:hint="Red Notification Group">
+                android:background="@color/colorRed"
+                android:foreground="@color/colorRed"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp">
             </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
 
             <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
@@ -263,7 +274,10 @@
                 android:layout_width="0dp"
                 android:layout_height="25dp"
                 android:layout_weight="1"
-                android:backgroundTint="@color/colorGreen">
+                android:background="@color/colorGreen"
+                android:foreground="@color/colorGreen"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp">
             </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
 
             <com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner
@@ -271,7 +285,10 @@
                 android:layout_width="0dp"
                 android:layout_height="25dp"
                 android:layout_weight="1"
-                android:backgroundTint="@color/colorBlue">
+                android:background="@color/colorBlue"
+                android:foreground="@color/colorBlue"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp">
             </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
 
         </LinearLayout>

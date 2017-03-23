@@ -23,6 +23,7 @@
     <string name="signal_strength">Signal Strength:</string>
     <string name="db">db</string>
     <string name="connection_time">Connection time:</string>
+    <string name="notification_groups">Notification Groups</string>
 
     <!-- BUTTON LABELS -->
 
