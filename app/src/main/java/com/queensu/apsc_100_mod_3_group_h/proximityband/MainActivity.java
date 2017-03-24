@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     Vibrator vibrator;
 
-    // -------------------- NOTIFCATIONS --------------------
+    // -------------------- NOTIFICATIONS --------------------
 
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     boolean isConnected = false;
     boolean isOutOfRange = false;
+    boolean isWaitingToAutoConnect = false;
 
     int currentConnectionTime = 0;
 
@@ -171,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     // -------------------- DATA CONSTANTS --------------------
 
     public final static String COMMAND_BUTTON_PRESSED = "B1";
-    public final static String COMMAND_BUTTON_RELEASED = "B0";
+    //public final static String COMMAND_BUTTON_RELEASED = "B0";
 
     public final static String COMMAND_SWITCH_POSITION_1 = "S1";
     public final static String COMMAND_SWITCH_POSITION_2 = "S2";
@@ -283,6 +284,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
             finish();
             return;
+        }
+        else {
+            if(isWaitingToAutoConnect) {
+                attemptConnectionToLastConnectedBluetoothDevice();
+            }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -638,7 +644,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
         }
         else {
-            if(isConnected) {
+            if(isConnected && canActivateAlarmNow) {
                 cancelAlarm();
             }
             if(rssiValueTextView != null) {
@@ -802,7 +808,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         registerReceiver(notificationCallbackReceiver, intentFilter);
 
         boolean canUseCachedPackageList = true;
-        int numberOfPackages = 0;
+        int numberOfPackages;
 
         final PackageManager packageManager = getPackageManager();
         List<PackageInfo> packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
@@ -980,10 +986,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 }
 
             }
-        }else {
+        }//else {
             //openNotificationAccess();
             //mTextView.setText("Please Enable Notification Access");
-        }
+        //}
     }
 
     private void openNotificationAccess() {
@@ -1091,7 +1097,16 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 Log.e("BLE CONNECTION", "Unable to initialize Bluetooth");
                 finish();
             }
-            attemptConnectionToLastConnectedBluetoothDevice();
+            if(mBluetoothAdapter == null) {
+                isWaitingToAutoConnect = true;
+            }
+            else {
+                if (mBluetoothAdapter.isEnabled()) {
+                    attemptConnectionToLastConnectedBluetoothDevice();
+                } else {
+                    isWaitingToAutoConnect = true;
+                }
+            }
         }
 
         @Override
@@ -1107,6 +1122,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connecting) + " " + currentSelectedBluetoothName + "...");
             mBluetoothLeService.connect(currentSelectedBluetoothAddress);
         }
+        isWaitingToAutoConnect = false;
     }
 
     void setUpConnectToBluetooth() {
