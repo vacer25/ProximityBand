@@ -123,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     boolean isConnected = false;
     boolean isOutOfRange = false;
     boolean isWaitingToAutoConnect = false;
+    boolean isWaitingToDisconnect = false;
+    boolean isWaitingToSendInitialStatusUpdate = false;
 
     int currentConnectionTime = 0;
 
@@ -152,22 +154,22 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     // -------------------- CONSTANTS --------------------
 
     private static final long PING_INTERVAL = 250; // ms
-    public static int RSSI_GRAPH_UPDATE_INTERVAL = 250;
-    public static int RSSI_SCAN_INTERVAL = 1000;
-    public static int RSSI_UPDATE_FILTERING_INTERVAL = 50;
+    public static int RSSI_GRAPH_UPDATE_INTERVAL = 250; // ms
+    public static int RSSI_SCAN_INTERVAL = 1000; // ms
+    public static int RSSI_UPDATE_FILTERING_INTERVAL = 50; // ms
     private static final int REQUEST_ENABLE_BT = 1;
 
-    private static final long VIBRATION_REPEAT_TIME = 500;
+    private static final long VIBRATION_REPEAT_TIME = 500; // ms
 
     private static final int RSSI_GRAPH_NUMBER_OF_DATA_POINTS = 250;
 
     private static final double MAX_FILTERING = 0.005;
     private static final double MIN_FILTERING = 0.0001;
 
-    private static final int MAX_RSSI = -30;
-    private static final int MIN_RSSI = -110;
+    private static final int MAX_RSSI = -30; // db
+    private static final int MIN_RSSI = -110; // db
 
-    long[] ALARM_VIBRATE_PATTERN = {0,200,50,200};
+    long[] ALARM_VIBRATE_PATTERN = {0,200,50,200}; // ms
 
     // -------------------- DATA CONSTANTS --------------------
 
@@ -515,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
             else {
                 //Log.vibrator("ACTION", "Attempting to disconnect...");
-                canActivateAlarmNow = false;
+                isWaitingToDisconnect = true;
                 connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.disconnecting) + " " + currentSelectedBluetoothName + "...") ;
                 mBluetoothLeService.disconnect();
             }
@@ -636,7 +638,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
 
         if(filteredRSSI < rssiThreshold) {
-            if(canActivateAlarmNow) {
+            if(canActivateAlarmNow && isConnected) {
                 activateAlarm();
             }
             if(rssiValueTextView != null) {
@@ -644,7 +646,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
         }
         else {
-            if(isConnected && canActivateAlarmNow) {
+            if(isConnected && !isWaitingToDisconnect) {
                 cancelAlarm();
             }
             if(rssiValueTextView != null) {
@@ -701,7 +703,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                             }
                         })
                 .create();
-        alarmDialog.show();
+        try {
+            alarmDialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // -------------------- CONNECTION TIME --------------------
@@ -739,7 +745,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         @Override
         public void run() {
             try {
-                sendBluetoothData("!");
+                if(sendBluetoothData("!") && isWaitingToSendInitialStatusUpdate) {
+                    updateNotificationsList(true);
+                    sendBluetoothData("2"); // Medium vibration
+                    isWaitingToSendInitialStatusUpdate = false;
+                }
             } finally {
                 pingHandler.postDelayed(sendRepeatingPing, PING_INTERVAL);
             }
@@ -1037,10 +1047,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- BLUETOOTH CONNECTION --------------------
 
-    void sendBluetoothData(String dataToSend) {
+    boolean sendBluetoothData(String dataToSend) {
+        boolean didSendAllData = false;
         if(mBluetoothLeService != null) {
             for (int currentCharIndex = 0; currentCharIndex < dataToSend.length(); currentCharIndex++) {
-                mBluetoothLeService.writeCustomCharacteristic((int)(dataToSend.charAt(currentCharIndex)));
+                didSendAllData = mBluetoothLeService.writeCustomCharacteristic((int)(dataToSend.charAt(currentCharIndex)));
                 if(dataToSend.length() > 0) {
                     try {
                         Thread.sleep(10);
@@ -1050,6 +1061,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 }
             }
         }
+        return didSendAllData;
     }
 
     void processReceivedBluetoothData(String dataReceived) {
@@ -1127,8 +1139,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     void setUpConnectToBluetooth() {
 
-        canActivateAlarmNow = true;
         isConnected = true;
+        isWaitingToDisconnect = false;
+        canActivateAlarmNow = true;
         sendRepeatingPing.run();
         connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connected) + " " + currentSelectedBluetoothName);
         connectionButton.setText(R.string.disconnect);
@@ -1136,13 +1149,14 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         scanLeDevice(false);
         setConnectionTime(-1);
         updateConnectionTime.run();
-        updateNotificationsList(true);
 
         ArrayList<String> bluetoothDevicesNames = new ArrayList<>();
         bluetoothDevicesNames.add(currentSelectedBluetoothName);
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, bluetoothDevicesNames);
         bluetoothDeviceSelectionSpinner.setAdapter(adapter);
         bluetoothDeviceSelectionSpinner.setEnabled(false);
+
+        isWaitingToSendInitialStatusUpdate = true;
 
     }
 
@@ -1153,9 +1167,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.disconnected));
         connectionButton.setText(R.string.connect);
 
-        if(canActivateAlarmNow) {
+        if(canActivateAlarmNow && !isWaitingToDisconnect) {
             activateAlarm();
         }
+        isWaitingToDisconnect = false;
 
         connectionTimeHandler.removeCallbacks(updateConnectionTime);
         rssiValueTextView.setText("---");
@@ -1266,7 +1281,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                             if(device.getAddress().equals(currentSelectedBluetoothAddress)) {
                                 currentRSSI = rssi;
                                 setRSSIValue(rssi, false);
-                                //Log.vibrator("BLE SCAN", "Found new device! Address: " + device.getAddress() + " Name: " + device.getName());
+                                Log.v("BLE SCAN", "Found new device! Address: " + device.getAddress() + " Name: " + device.getName());
                             }
                             addBLEDeviceToList(device);
                         }

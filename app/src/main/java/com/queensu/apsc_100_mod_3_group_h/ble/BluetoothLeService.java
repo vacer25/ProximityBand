@@ -365,16 +365,16 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public void writeCustomCharacteristic(int value) {
+    public boolean writeCustomCharacteristic(int value) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
+            return false;
         }
         /*check if the service is available on the device*/
         BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString(UUID_SERVICE));
         if(mCustomService == null){
             Log.w(TAG, "Custom BLE Service not found");
-            return;
+            return false;
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString(UUID_TX));
@@ -382,8 +382,11 @@ public class BluetoothLeService extends Service {
             mWriteCharacteristic.setValue(value, android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8, 0);
             if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
                 Log.w(TAG, "Failed to write characteristic");
+                return false;
             }
         }
+
+        return true;
 
     }
 
