@@ -28,6 +28,10 @@
     <string name="alarm_dialog_message_out_of_range">The Proximity Band is out of range!</string>
     <string name="alarm_dialog_message_lost_connection">Lost connection to the Proximity Band!</string>
 
+    <string name="pick_red_notification_group">Pick Red Notification Group</string>
+    <string name="pick_green_notification_group">Pick Green Notification Group</string>
+    <string name="pick_blue_notification_group">Pick Blue Notification Group</string>
+
     <!-- BUTTON LABELS -->
 
     <string name="button_action">Button Action</string>

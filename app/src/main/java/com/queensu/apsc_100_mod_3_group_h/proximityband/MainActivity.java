@@ -22,6 +22,7 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
 import android.support.v7.app.AppCompatActivity;
@@ -42,6 +43,7 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.queensu.apsc_100_mod_3_group_h.ble.BluetoothLeService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -94,8 +96,13 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
     private boolean isEnabledNLS = false;
 
-    public static ArrayList<String> packageNames = new ArrayList<>();
-    public static ArrayList<String> packageAppNames = new ArrayList<>();
+    private String packagesListHash = "";
+
+    public ArrayList<String> packageNames = new ArrayList<>();
+    public ArrayList<String> packageAppNames = new ArrayList<>();
+
+    private String packageNamesString = "";
+    private String packageAppNamesString = "";
 
     public static ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
@@ -186,7 +193,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     public static String PREF_GREEN_NOTIFICATIONS = "Green_Notifications";
     public static String PREF_BLUE_NOTIFICATIONS = "Blue_Notifications";
 
-    public static String PREF_BUTTON_ACTION = "Button_Action";
+    public static String PREF_PACKAGES_LIST_HASH = "Packages_List_Hash";
+    public static String PREF_PACKAGES_NAMES = "Packages_Names";
+    public static String PREF_PACKAGES_APP_NAMES = "Packages_App_Names";
 
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
@@ -238,6 +247,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             showConfirmDialog();
         }
 
+        HelperFunctions.appHasBeenSentToBackground = true;
+
     }
 
     @Override
@@ -283,6 +294,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         currentSelectedBluetoothAddress = prefs.getString(PREF_BLE_ADDRESS, "");
         currentSelectedBluetoothName = prefs.getString(PREF_BLE_NAME, "");
+
+        packagesListHash = prefs.getString(PREF_PACKAGES_LIST_HASH, packagesListHash);
+        packageNamesString = prefs.getString(PREF_PACKAGES_NAMES, packageNamesString);
+        packageAppNamesString = prefs.getString(PREF_PACKAGES_APP_NAMES, packageAppNamesString);
 
         rssiFilteringSmoothness = prefs.getFloat(PREF_FILTERING, rssiFilteringSmoothness);
         rssiThreshold = prefs.getInt(PREF_THRESHOLD, rssiThreshold);
@@ -786,45 +801,108 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         intentFilter.addAction(NotificationMonitorService.ACTION_NOTIFICATION_EVENT);
         registerReceiver(notificationCallbackReceiver, intentFilter);
 
+        boolean canUseCachedPackageList = true;
+        int numberOfPackages = 0;
+
         final PackageManager packageManager = getPackageManager();
         List<PackageInfo> packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
+        //String currentPackagesListHash = HelperFunctions.MD5(packages.toArray().toString());
 
-        Collections.sort(packages, new Comparator<PackageInfo>() {
-            @Override
-            public int compare(PackageInfo o1, PackageInfo o2) {
-                String package1Name = (String)(o1.applicationInfo != null ? packageManager.getApplicationLabel(o1.applicationInfo) : "(unknown)");
-                String package2Name = (String)(o2.applicationInfo != null ? packageManager.getApplicationLabel(o2.applicationInfo) : "(unknown)");
-                return package1Name.toUpperCase().compareTo(package2Name.toUpperCase());
+        //if(packageNamesString.length() == 0) {
+        //    canUseCachedPackageList = false;
+        //}
+        //else {
+
+            ArrayList<String> temp_currentPackageNames = new ArrayList<>();
+            ArrayList<String> temp_cachedPackageNames = new ArrayList<>();
+            for (PackageInfo packageInfo : packages) {
+                if (!HelperFunctions.isSystemPackage(packageInfo)) {
+                    String currentPackageName = (String) (packageInfo.applicationInfo != null ? packageManager.getApplicationLabel(packageInfo.applicationInfo) : "");
+                    if(!currentPackageName.trim().isEmpty()) {
+                        temp_currentPackageNames.add(packageInfo.packageName);
+                    }
+                }
             }
-        });
+
+            numberOfPackages = temp_currentPackageNames.size();
+            temp_cachedPackageNames.addAll(Arrays.asList(packageNamesString.split("\n")));
+
+            if(!temp_currentPackageNames.containsAll(temp_cachedPackageNames) || !temp_cachedPackageNames.containsAll(temp_currentPackageNames)) {
+                canUseCachedPackageList = false;
+            }
+
+        //}
 
         ArrayList<String> redNotificationGroupNames = new ArrayList<>();
         ArrayList<String> greenNotificationGroupNames = new ArrayList<>();
         ArrayList<String> blueNotificationGroupNames = new ArrayList<>();
 
+        packageNames.clear();
         packageAppNames.clear();
 
-        for (PackageInfo packageInfo : packages) {
-            if(!HelperFunctions.isSystemPackage(packageInfo)) {
+        if(!canUseCachedPackageList){
 
-                String packageName = packageInfo.packageName;
-                String applicationName = (String) (packageInfo.applicationInfo != null ? packageManager.getApplicationLabel(packageInfo.applicationInfo) : "(unknown)");
-                if(applicationName.trim().isEmpty()) {
-                    continue;
+            //packagesListHash = currentPackagesListHash;
+            //prefs.edit().putString(PREF_PACKAGES_LIST_HASH, packagesListHash).apply();
+            Collections.sort(packages, new Comparator<PackageInfo>() {
+                @Override
+                public int compare(PackageInfo o1, PackageInfo o2) {
+                    String package1Name = (String)(o1.applicationInfo != null ? packageManager.getApplicationLabel(o1.applicationInfo) : "(unknown)");
+                    String package2Name = (String)(o2.applicationInfo != null ? packageManager.getApplicationLabel(o2.applicationInfo) : "(unknown)");
+                    return package1Name.toUpperCase().compareTo(package2Name.toUpperCase());
                 }
-                packageAppNames.add(applicationName);
-                packageNames.add(packageName);
+            });
 
-                if(redNotificationGroup.contains(packageName)) {
-                    redNotificationGroupNames.add(applicationName);
-                }
-                if(greenNotificationGroup.contains(packageName)) {
-                    greenNotificationGroupNames.add(applicationName);
-                }
-                if(blueNotificationGroup.contains(packageName)) {
-                    blueNotificationGroupNames.add(applicationName);
-                }
+            packageNamesString = "";
+            packageAppNamesString = "";
 
+            int currentPackageIndex = 0;
+            for (PackageInfo packageInfo : packages) {
+                if(!HelperFunctions.isSystemPackage(packageInfo)) {
+
+                    String packageName = packageInfo.packageName;
+                    String packageAppName = (String) (packageInfo.applicationInfo != null ? packageManager.getApplicationLabel(packageInfo.applicationInfo) : "(unknown)");
+                    if(packageAppName.trim().isEmpty()) {
+                        continue;
+                    }
+                    packageNames.add(packageName);
+                    packageAppNames.add(packageAppName);
+
+                    if(currentPackageIndex != numberOfPackages - 1) {
+                        packageNamesString += packageName + "\n";
+                        packageAppNamesString += packageAppName + "\n";
+                    }
+                    else {
+                        packageNamesString += packageName;
+                        packageAppNamesString += packageAppName;
+                    }
+
+                    currentPackageIndex++;
+
+                }
+            }
+
+            prefs.edit().putString(PREF_PACKAGES_NAMES, packageNamesString).apply();
+            prefs.edit().putString(PREF_PACKAGES_APP_NAMES, packageAppNamesString).apply();
+
+        }
+        else {
+            packageNames.addAll(Arrays.asList(packageNamesString.split("\n")));
+            packageAppNames.addAll(Arrays.asList(packageAppNamesString.split("\n")));
+        }
+
+        for(int i = 0; i < packageNames.size(); i++) {
+            String currentPackageName = packageNames.get(i);
+            String currentPackageAppName = packageAppNames.get(i);
+
+            if(redNotificationGroup.contains(currentPackageName)) {
+                redNotificationGroupNames.add(currentPackageAppName);
+            }
+            if(greenNotificationGroup.contains(currentPackageName)) {
+                greenNotificationGroupNames.add(currentPackageAppName);
+            }
+            if(blueNotificationGroup.contains(currentPackageName)) {
+                blueNotificationGroupNames.add(currentPackageAppName);
             }
         }
 
@@ -840,9 +918,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         greenNotificationGroupMultiSelectionSpinner.setSelection(greenNotificationGroupNames);
         blueNotificationGroupMultiSelectionSpinner.setSelection(blueNotificationGroupNames);
 
-        redNotificationGroupMultiSelectionSpinner.setTitle("Pick Red Notification Group");
-        greenNotificationGroupMultiSelectionSpinner.setTitle("Pick Green Notification Group");
-        blueNotificationGroupMultiSelectionSpinner.setTitle("Pick Blue Notification Group");
+        redNotificationGroupMultiSelectionSpinner.setTitle(getResources().getString(R.string.pick_red_notification_group));
+        greenNotificationGroupMultiSelectionSpinner.setTitle(getResources().getString(R.string.pick_green_notification_group));
+        blueNotificationGroupMultiSelectionSpinner.setTitle(getResources().getString(R.string.pick_blue_notification_group));
 
     }
 
@@ -1013,7 +1091,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 Log.e("BLE CONNECTION", "Unable to initialize Bluetooth");
                 finish();
             }
-            attemptConnectionToBluetoothDevice();
+            attemptConnectionToLastConnectedBluetoothDevice();
         }
 
         @Override
@@ -1023,9 +1101,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     };
 
-    void attemptConnectionToBluetoothDevice() {
+    void attemptConnectionToLastConnectedBluetoothDevice() {
         // Automatically connects to the device upon successful start-up initialization.
-        if(currentSelectedBluetoothAddress.contains(":")) {
+        if(currentSelectedBluetoothAddress.contains(":") && !isConnected) {
             connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connecting) + " " + currentSelectedBluetoothName + "...");
             mBluetoothLeService.connect(currentSelectedBluetoothAddress);
         }

@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Vibrator;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -20,6 +21,30 @@ import java.util.ArrayList;
 
 public class HelperFunctions {
 
+    // ------------------------------ VARIABLES ------------------------------
+
+    public static boolean appHasBeenSentToBackground = false;
+
+    // ------------------------------ HASHING ------------------------------
+
+    @Nullable
+    public static String MD5(String md5) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] array = md.digest(md5.getBytes("UTF-8"));
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < array.length; ++i) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3));
+            }
+            return sb.toString();
+        }
+        catch (java.security.NoSuchAlgorithmException e) {}
+        catch (java.io.UnsupportedEncodingException e) {}
+        return null;
+    }
+
+    // ------------------------------ PACKAGES ------------------------------
+
     private static ArrayList<String> includedPackages = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
         add("com.android.email"); // Email
@@ -29,12 +54,6 @@ public class HelperFunctions {
 
     public static boolean isSystemPackage(PackageInfo pkgInfo) {
         return (((pkgInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) && !includedPackages.contains(pkgInfo.packageName)) ? true : false;
-    }
-
-    static void vibrate(Activity activity, int time) {
-        Vibrator v = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
-        // Vibrate for 500 milliseconds
-        v.vibrate(time);
     }
 
     // ------------------------------ ACTIVITY SETTINGS ------------------------------
