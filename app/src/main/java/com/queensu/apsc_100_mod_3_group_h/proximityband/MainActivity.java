@@ -625,7 +625,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         else {
             if(isConnected) {
                 cancelAlarm();
-                canActivateAlarmNow = true;
             }
             if(rssiValueTextView != null) {
                 rssiValueTextView.setTextColor(Color.BLACK);
@@ -658,10 +657,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             vibrationRepeatHandler.removeCallbacks(repeatVibration);
             vibrator.cancel();
             isOutOfRange = false;
-            if(doAllowAlarmToContinue) {
-                canActivateAlarmNow = true;
-            }
         }
+        canActivateAlarmNow = doAllowAlarmToContinue;
     }
 
     private void showAlarmDialog() {
@@ -673,7 +670,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 .setPositiveButton(android.R.string.ok,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                canActivateAlarmNow = false;
                                 cancelAlarm(false);
                             }
                         })
@@ -994,13 +990,14 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             sendBluetoothData(COMMAND_ACK);
         }
         else if(dataReceived.equals(COMMAND_BUTTON_PRESSED)) {
-            vibrator.vibrate(1000000);
+            //vibrator.vibrate(1000000);
+            cancelAlarm(false);
             sendBluetoothData(COMMAND_ACK);
         }
-        else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
-            vibrator.cancel();
-            sendBluetoothData(COMMAND_ACK);
-        }
+        //else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
+        //    vibrator.cancel();
+        //    sendBluetoothData(COMMAND_ACK);
+        //}
 
     }
 
@@ -1042,18 +1039,16 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connected) + " " + currentSelectedBluetoothName);
         connectionButton.setText(R.string.disconnect);
 
+        scanLeDevice(false);
+        setConnectionTime(-1);
+        updateConnectionTime.run();
+        updateNotificationsList(true);
+
         ArrayList<String> bluetoothDevicesNames = new ArrayList<>();
         bluetoothDevicesNames.add(currentSelectedBluetoothName);
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, bluetoothDevicesNames);
         bluetoothDeviceSelectionSpinner.setAdapter(adapter);
-
         bluetoothDeviceSelectionSpinner.setEnabled(false);
-
-        setConnectionTime(-1);
-        updateConnectionTime.run();
-        scanLeDevice(false);
-
-        updateNotificationsList(true);
 
     }
 
@@ -1068,15 +1063,14 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             activateAlarm();
         }
 
-        bluetoothDevices.clear();
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.none_ble_devices));
-        bluetoothDeviceSelectionSpinner.setAdapter(adapter);
-
-        bluetoothDeviceSelectionSpinner.setEnabled(true);
-
         connectionTimeHandler.removeCallbacks(updateConnectionTime);
         rssiValueTextView.setText("---");
         scanLeDevice(true);
+
+        bluetoothDevices.clear();
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.none_ble_devices));
+        bluetoothDeviceSelectionSpinner.setAdapter(adapter);
+        bluetoothDeviceSelectionSpinner.setEnabled(true);
 
     }
 
