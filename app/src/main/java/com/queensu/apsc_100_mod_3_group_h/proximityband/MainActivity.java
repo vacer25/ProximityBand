@@ -27,6 +27,7 @@ import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -273,6 +274,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     protected void onDestroy() {
         super.onDestroy();
         unbindService(mServiceConnection);
+        unregisterReceiver(mGattUpdateReceiver);
+        unregisterReceiver(notificationCallbackReceiver);
         if(vibrationRepeatHandler != null) {
             vibrationRepeatHandler.removeCallbacks(repeatVibration);
         }
@@ -517,9 +520,21 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
             else {
                 //Log.vibrator("ACTION", "Attempting to disconnect...");
+                boolean didSendSuppressAlarmCommand = false;
+                do {
+                    didSendSuppressAlarmCommand = sendBluetoothData("Y");
+                } while(!didSendSuppressAlarmCommand);
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 isWaitingToDisconnect = true;
-                connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.disconnecting) + " " + currentSelectedBluetoothName + "...") ;
+                connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.disconnecting) + " " + currentSelectedBluetoothName + "...");
                 mBluetoothLeService.disconnect();
+
             }
         }
 
