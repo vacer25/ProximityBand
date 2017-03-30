@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -1067,7 +1068,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
         else if(dataReceived.equals(COMMAND_BUTTON_PRESSED)) {
             //vibrator.vibrate(1000000);
-            cancelAlarm(false);
+            if(alarmDialog.isShowing()) {
+                cancelAlarm(false);
+            }
             sendBluetoothData(COMMAND_ACK);
         }
         //else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
