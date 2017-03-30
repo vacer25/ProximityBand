@@ -19,12 +19,20 @@
 
     <string name="threshold">Threshold:</string>
     <string name="filtering">Filtering:</string>
+    <string name="delay">Delay:</string>
+
     <string name="status">Status: </string>
+
     <string name="signal_strength">Signal Strength:</string>
+
     <string name="db">db</string>
+    <string name="percent">%</string>
+    <string name="seconds">s</string>
+
     <string name="connection_time">Connection time:</string>
     <string name="notification_groups">Notification Groups</string>
     <string name="alarm_dialog_title">ALARM!</string>
+
     <string name="alarm_dialog_message_out_of_range">The Proximity Band is out of range!</string>
     <string name="alarm_dialog_message_lost_connection">Lost connection to the Proximity Band!</string>
 

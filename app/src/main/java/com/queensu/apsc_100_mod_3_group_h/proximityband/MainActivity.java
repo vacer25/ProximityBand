@@ -58,17 +58,21 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     SeekBar thresholdSeekBar;
     SeekBar filteringSeekBar;
+    SeekBar delaySeekBar;
+
     TextView thresholdValueTextView;
     TextView filteringValueTextView;
+    TextView delayValueTextView;
+
     TextView rssiValueTextView;
     TextView connectionStatusTextView;
     TextView connectionTimeTextView;
 
     Button connectionButton;
-    Button setButtonActionButton;
+    //Button setButtonActionButton;
 
     Spinner bluetoothDeviceSelectionSpinner;
-    Spinner buttonActionSelectionSpinner;
+    //Spinner buttonActionSelectionSpinner;
 
     GraphView rssiValueGraph;
 
@@ -86,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private Handler rssiHandler;
     private Handler rssiFilteringHandler;
     private Handler vibrationRepeatHandler;
+    private Handler alarmDelayHandler;
 
     // -------------------- VIBRATION --------------------
 
@@ -142,6 +147,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     int rssiThreshold = -100;
     int numberOfRSSIReadings = 0;
 
+    float alarmDelay = 1f;
+
     boolean canActivateAlarmNow = false;
 
     LineGraphSeries<DataPoint> currentRSSIGraphSeries;
@@ -166,6 +173,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private static final double MAX_FILTERING = 0.005;
     private static final double MIN_FILTERING = 0.0001;
+
+    private static final double MAX_ALARM_DELAY = 5.0;
+    private static final double MIN_ALARM_DELAY = 0.0;
 
     private static final int MAX_RSSI = -30; // db
     private static final int MIN_RSSI = -110; // db
@@ -192,6 +202,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     String PREF_FILTERING = "Filtering_Smoothness";
     String PREF_THRESHOLD = "RSSI_Threshold";
+    String PREF_DELAY = "Alarm_Delay";
 
     public static String PREF_RED_NOTIFICATIONS = "Red_Notifications";
     public static String PREF_GREEN_NOTIFICATIONS = "Green_Notifications";
@@ -212,6 +223,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         rssiHandler = new Handler();
         rssiFilteringHandler = new Handler();
         vibrationRepeatHandler = new Handler();
+        alarmDelayHandler = new Handler();
 
         rssiFilter = new KalmanFilter();
 
@@ -312,11 +324,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         rssiFilteringSmoothness = prefs.getFloat(PREF_FILTERING, rssiFilteringSmoothness);
         rssiThreshold = prefs.getInt(PREF_THRESHOLD, rssiThreshold);
+        alarmDelay = prefs.getFloat(PREF_DELAY, alarmDelay);
 
         rssiFilter.R = rssiFilteringSmoothness;
 
-        setThresholdValue(rssiThreshold);
-        setFilteringValueTextView(rssiFilteringSmoothness);
+        //setThresholdValue(rssiThreshold);
+        //setFilteringValueTextView(rssiFilteringSmoothness);
 
         PreferenceSettings.getNotificationSettings();
 
@@ -328,9 +341,11 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         thresholdSeekBar = (SeekBar)findViewById(R.id.thresholdSeekBar);
         filteringSeekBar = (SeekBar)findViewById(R.id.filteringSeekBar);
+        delaySeekBar = (SeekBar)findViewById(R.id.delaySeekBar);
 
         thresholdValueTextView = (TextView)findViewById(R.id.thresholdValueTextView);
         filteringValueTextView = (TextView)findViewById(R.id.filteringValueTextView);
+        delayValueTextView = (TextView)findViewById(R.id.delayValueTextView);
 
         rssiValueTextView = (TextView)findViewById(R.id.rssiValueTextView);
         connectionStatusTextView = (TextView)findViewById(R.id.connectionStatusTextView);
@@ -339,10 +354,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         setConnectionTime(0);
 
         bluetoothDeviceSelectionSpinner = (Spinner)findViewById(R.id.bluetoothDeviceSelectionSpinner);
-        buttonActionSelectionSpinner = (Spinner)findViewById(R.id.buttonActionSelectionSpinner);
+        //buttonActionSelectionSpinner = (Spinner)findViewById(R.id.buttonActionSelectionSpinner);
 
         connectionButton = (Button)findViewById(R.id.connectionButton);
-        setButtonActionButton = (Button)findViewById(R.id.setButtonActionButton);
+        //setButtonActionButton = (Button)findViewById(R.id.setButtonActionButton);
 
         rssiValueGraph = (GraphView)findViewById(R.id.rssiValueGraph);
         resetGraph();
@@ -386,7 +401,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         filteringSeekBar.setOnSeekBarChangeListener(this);
         filteringSeekBar.setProgress((int)(HelperFunctions.map(rssiFilteringSmoothness, (float)MIN_FILTERING, (float)MAX_FILTERING, 0f, 100f)));
         rssiFilter.R = rssiFilteringSmoothness;
-        setFilteringValueTextView(rssiFilter.R);
+        setFilteringValueTextView(filteringSeekBar.getProgress());
+
+        // Delay seekbar
+        delaySeekBar.setOnSeekBarChangeListener(this);
+        delaySeekBar.setProgress((int)(HelperFunctions.map(alarmDelay, (float)MIN_ALARM_DELAY, (float)MAX_ALARM_DELAY, 0f, 100f)));
+        setDelayValueTextView(alarmDelay);
 
         redNotificationGroupMultiSelectionSpinner = (MultiSelectionSpinner)findViewById(R.id.redNotificationGroupMultiSelectionSpinner);
         greenNotificationGroupMultiSelectionSpinner = (MultiSelectionSpinner)findViewById(R.id.greenNotificationGroupMultiSelectionSpinner);
@@ -425,83 +445,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     }
 
     // -------------------- USER INTERACTION --------------------
-
-    @SuppressLint("InlinedApi")
-    @TargetApi(19)
-    public void onSetButtonActionClicked(View v) {
-
-        /*
-        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        NotificationCompat.Builder ncomp = new NotificationCompat.Builder(this);
-        ncomp.setContentTitle("My Notification");
-        ncomp.setContentText("Notification Listener Service Example");
-        ncomp.setTicker("Notification Listener Service Example");
-        ncomp.setSmallIcon(R.drawable.proximity_band_logo);
-        ncomp.setAutoCancel(true);
-        nManager.notify((int) System.currentTimeMillis(), ncomp.build());
-        */
-
-        long selection = buttonActionSelectionSpinner.getSelectedItemId();
-
-        if(selection == 0) {
-            sendBluetoothData("1");
-        }
-        else if(selection == 1) {
-            sendBluetoothData("2");
-        }
-        else if(selection == 2) {
-            sendBluetoothData("3");
-        }
-        else if(selection == 3) {
-            sendBluetoothData("R");
-        }
-        else if(selection == 4) {
-            sendBluetoothData("G");
-        }
-        else if(selection == 5) {
-            sendBluetoothData("B");
-        }
-        else if(selection == 6) {
-            sendBluetoothData("r");
-        }
-        else if(selection == 7) {
-            sendBluetoothData("g");
-        }
-        else if(selection == 8) {
-            sendBluetoothData("b");
-        }
-        else if(selection == 9) {
-            sendBluetoothData("I");
-        }
-        else if(selection == 10) {
-            sendBluetoothData("J");
-        }
-        else if(selection == 11) {
-            sendBluetoothData("K");
-        }
-        else if(selection == 12) {
-            sendBluetoothData("i");
-        }
-        else if(selection == 13) {
-            sendBluetoothData("j");
-        }
-        else if(selection == 14) {
-            sendBluetoothData("k");
-        }
-        else if(selection == 15) {
-            sendBluetoothData("RGB");
-        }
-        else if(selection == 16) {
-            sendBluetoothData("rgbijk");
-        }
-        else if(selection == 17) {
-            sendBluetoothData("X");
-        }
-        else if(selection == 18) {
-            sendBluetoothData("x");
-        }
-
-    }
 
     public void onSetBluetoothDeviceClicked(View v) {
 
@@ -581,7 +524,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             } else if (seekBar == filteringSeekBar) {
                 rssiFilteringSmoothness = HelperFunctions.map(filteringSeekBar.getProgress(), 0f, 100f, (float) MIN_FILTERING, (float) MAX_FILTERING);
                 rssiFilter.R = rssiFilteringSmoothness;
-                setFilteringValueTextView(rssiFilter.R);
+                setFilteringValueTextView(filteringSeekBar.getProgress());
+            } else if (seekBar == delaySeekBar) {
+                alarmDelay = HelperFunctions.map(delaySeekBar.getProgress(), 0f, 100f, (float) MIN_ALARM_DELAY, (float) MAX_ALARM_DELAY);
+                setDelayValueTextView(alarmDelay);
             }
         }
     }
@@ -600,6 +546,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         else if(seekBar == filteringSeekBar) {
             prefs.edit().putFloat(PREF_FILTERING, rssiFilteringSmoothness).apply();
         }
+        else if(seekBar == delaySeekBar) {
+            prefs.edit().putFloat(PREF_DELAY, alarmDelay).apply();
+        }
     }
 
     void setThresholdValue(int valueToSet){
@@ -615,13 +564,19 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     void setThresholdValueText(int valueToSet) {
         if(thresholdValueTextView != null) {
-            thresholdValueTextView.setText(String.valueOf(valueToSet));
+            thresholdValueTextView.setText(String.valueOf(valueToSet) + getResources().getString(R.string.db));
         }
     }
 
     void setFilteringValueTextView(double valueToSet) {
         if(thresholdValueTextView != null) {
-            filteringValueTextView.setText(String.format(Locale.ENGLISH, "%.5f", valueToSet));
+            filteringValueTextView.setText(/*String.format(Locale.ENGLISH, "%.5f", valueToSet)*/(int)valueToSet + getResources().getString(R.string.percent));
+        }
+    }
+
+    void setDelayValueTextView(double valueToSet) {
+        if(delayValueTextView != null) {
+            delayValueTextView.setText(String.format(Locale.ENGLISH, "%.1f", valueToSet) + getResources().getString(R.string.seconds));
         }
     }
 
@@ -654,7 +609,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         if(filteredRSSI < rssiThreshold) {
             if(canActivateAlarmNow && isConnected) {
-                activateAlarm();
+                alarmDelayHandler.postDelayed(activateDelayedAlarm, (long)(alarmDelay * 1000));
             }
             if(rssiValueTextView != null) {
                 rssiValueTextView.setTextColor(Color.RED);
@@ -696,6 +651,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             vibrator.cancel();
             isOutOfRange = false;
         }
+        alarmDelayHandler.removeCallbacks(activateDelayedAlarm);
         canActivateAlarmNow = doAllowAlarmToContinue;
     }
 
@@ -811,6 +767,15 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             } finally {
                 connectionTimeHandler.postDelayed(updateConnectionTime, 1000);
             }
+        }
+    };
+
+    Runnable activateDelayedAlarm = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                activateAlarm();
+            } finally { }
         }
     };
 

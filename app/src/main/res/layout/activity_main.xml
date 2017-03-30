@@ -153,7 +153,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/thresholdSeekBar"
-            android:layout_alignEnd="@+id/setButtonActionButton"
+            android:layout_alignEnd="@+id/notificationGroupHolderLinearLayout"
             android:layout_below="@+id/senstitivityTextView"
             android:layout_alignStart="@+id/senstitivityTextView"
             android:progress="80" />
@@ -184,7 +184,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/filteringSeekBar"
-            android:layout_alignEnd="@+id/setButtonActionButton"
+            android:layout_alignEnd="@+id/notificationGroupHolderLinearLayout"
             android:layout_below="@+id/filteringTextView"
             android:layout_alignStart="@+id/filteringTextView"
             android:progress="50" />
@@ -201,6 +201,8 @@
             android:layout_marginLeft="5dp" />
 
         <!-- DEMO ACTION -->
+
+        <!--
 
         <TextView
             android:text="@string/demo_action"
@@ -236,14 +238,49 @@
             android:foreground="@drawable/parameter_view_border"
             android:background="@drawable/button_background" />
 
+        -->
+
+        <!-- DELAY -->
+
+        <TextView
+            android:text="@string/delay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/delayTextView"
+            android:layout_below="@+id/filteringSeekBar"
+            android:layout_alignStart="@+id/filteringSeekBar"
+            android:layout_marginTop="10dp" />
+
+        <SeekBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/delaySeekBar"
+            android:layout_alignEnd="@+id/notificationGroupHolderLinearLayout"
+            android:layout_below="@+id/delayTextView"
+            android:layout_alignStart="@+id/filteringSeekBar"
+            android:progress="50" />
+
+        <TextView
+            android:text="xx"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/delayValueTextView"
+            android:layout_alignBaseline="@+id/delayTextView"
+            android:layout_alignBottom="@+id/delayTextView"
+            android:layout_alignEnd="@+id/filteringSeekBar"
+            android:layout_toEndOf="@+id/delayTextView"
+            android:layout_marginLeft="5dp" />
+
+        <!-- NITIFICATION GROUPS -->
+
         <TextView
             android:text="@string/notification_groups"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/notificationsLabelTextView"
-            android:layout_below="@+id/buttonActionSelectionSpinner"
+            android:layout_below="@+id/delaySeekBar"
             android:layout_marginTop="10dp"
-            android:layout_alignStart="@+id/thresholdSeekBar"
+            android:layout_alignStart="@+id/delaySeekBar"
             android:layout_marginBottom="5dp" />
 
         <LinearLayout
