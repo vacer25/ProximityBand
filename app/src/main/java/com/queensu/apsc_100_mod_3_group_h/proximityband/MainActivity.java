@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -139,6 +140,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     String currentSelectedBluetoothAddress = "";
     String currentSelectedBluetoothName = "";
 
+    boolean buttonIsPressed = false;
+
     // -------------------- RSSI ALGORITHM --------------------
 
     int currentRSSI = 0;
@@ -186,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     // -------------------- DATA CONSTANTS --------------------
 
     public final static String COMMAND_BUTTON_PRESSED = "B1";
-    //public final static String COMMAND_BUTTON_RELEASED = "B0";
+    public final static String COMMAND_BUTTON_RELEASED = "B0";
 
     public final static String COMMAND_SWITCH_POSITION_1 = "S1";
     public final static String COMMAND_SWITCH_POSITION_2 = "S2";
@@ -1045,6 +1048,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         return didSendAllData;
     }
 
+    @TargetApi(23)
     void processReceivedBluetoothData(String dataReceived) {
 
         String[] dataReceivedSplit = dataReceived.split("\n", 2);
@@ -1053,30 +1057,47 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         Log.v("DATA", "Received Data: " + dataReceived);
 
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if(!notificationManager.isNotificationPolicyAccessGranted()) {
+            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+            startActivity(intent);
+        }
 
         if(dataReceived.equals(COMMAND_SWITCH_POSITION_1)) {
+            if(buttonIsPressed) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             sendBluetoothData(COMMAND_ACK);
         }
         else if(dataReceived.equals(COMMAND_SWITCH_POSITION_2)) {
+            if(buttonIsPressed) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
             sendBluetoothData(COMMAND_ACK);
         }
         else if(dataReceived.equals(COMMAND_SWITCH_POSITION_3)) {
+            if(buttonIsPressed) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             sendBluetoothData(COMMAND_ACK);
         }
         else if(dataReceived.equals(COMMAND_BUTTON_PRESSED)) {
             //vibrator.vibrate(1000000);
-            if(alarmDialog.isShowing()) {
-                cancelAlarm(false);
+            buttonIsPressed = true;
+            if(alarmDialog != null) {
+                if (alarmDialog.isShowing()) {
+                    cancelAlarm(false);
+                }
             }
             sendBluetoothData(COMMAND_ACK);
         }
-        //else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
-        //    vibrator.cancel();
-        //    sendBluetoothData(COMMAND_ACK);
-        //}
+        else if(dataReceived.equals(COMMAND_BUTTON_RELEASED)) {
+            buttonIsPressed = false;
+            sendBluetoothData(COMMAND_ACK);
+        }
 
     }
 
@@ -1125,6 +1146,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         isConnected = true;
         isWaitingToDisconnect = false;
         canActivateAlarmNow = true;
+        buttonIsPressed = false;
         sendRepeatingPing.run();
         connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connected) + " " + currentSelectedBluetoothName);
         connectionButton.setText(R.string.disconnect);
