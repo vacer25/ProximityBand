@@ -4,13 +4,14 @@ Connects with the Proximity Band over Bluetooth Low Energy to send and recieve d
 
 ## Usage:
 
-<b>Connecting with the Proximity Band:</b><br>
+<b>Connecting to the Proximity Band:</b><br>
 Turn on the Proximity Band.<br>
+Wait for the LEDs to quickly flash.<br>
 Start the Proximity Band Andoid App.<br>
 If Bluetooth is not turned on, accept the prompt to turn it on.<br>
 Using the "Bluetooth LE Device" dropdown, select the Proximity Band device.<br>
 Tap the "CONNECT" button.<br>
-If successful, the button text will chage to "DISCONNECT".<br>
+If successful, the button text will change to "DISCONNECT".<br>
 The app will attempt the automatically re-connect to the last connected device on the next launch.<br>
 
 <b>Setting alarm settings:</b><br>
