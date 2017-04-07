@@ -1,11 +1,9 @@
 package com.queensu.apsc_100_mod_3_group_h.proximityband;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -24,15 +22,16 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -81,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     MultiSelectionSpinner redNotificationGroupMultiSelectionSpinner;
     MultiSelectionSpinner greenNotificationGroupMultiSelectionSpinner;
     MultiSelectionSpinner blueNotificationGroupMultiSelectionSpinner;
+
+    WebView aboutWebView;
 
     // -------------------- BLE OBJECTS --------------------
 
@@ -165,6 +166,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     // -------------------- CONSTANTS --------------------
 
+    static final String PROXIMITY_BAND_BLE_NAME = "Proximity Band";
+
     private static final long PING_INTERVAL = 250; // ms
     public static int RSSI_GRAPH_UPDATE_INTERVAL = 250; // ms
     public static int RSSI_SCAN_INTERVAL = 1000; // ms
@@ -239,7 +242,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         updateRSSIFilter.run();
 
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        bindService(gattServiceIntent, mBLEServiceConnection, BIND_AUTO_CREATE);
+
+        Intent notificationMonitorServiceIntent = new Intent(this, NotificationMonitorService.class);
+        bindService(notificationMonitorServiceIntent, mNLServiceConnection, BIND_AUTO_CREATE);
 
     }
 
@@ -289,14 +295,21 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mServiceConnection);
+
+        unbindService(mBLEServiceConnection);
+        stopService(new Intent(this, BluetoothLeService.class));
         unregisterReceiver(mGattUpdateReceiver);
+
+        unbindService(mNLServiceConnection);
+        stopService(new Intent(this, NotificationMonitorService.class));
         unregisterReceiver(notificationCallbackReceiver);
+
         if(vibrationRepeatHandler != null) {
             vibrationRepeatHandler.removeCallbacks(repeatVibration);
         }
         vibrator.cancel();
         mBluetoothLeService = null;
+
     }
 
     @Override
@@ -362,6 +375,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         connectionButton = (Button)findViewById(R.id.connectionButton);
         //setButtonActionButton = (Button)findViewById(R.id.setButtonActionButton);
+
+        aboutWebView = (WebView)findViewById(R.id.aboutWebView);
+        aboutWebView.setVisibility(View.GONE);
 
         rssiValueGraph = (GraphView)findViewById(R.id.rssiValueGraph);
         resetGraph();
@@ -514,6 +530,19 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     @Override
     public void selectedStrings(MultiSelectionSpinner multiSelectionSpinner, List<String> strings) {
+    }
+
+    public void onAboutButtonClicked (View v) {
+        aboutWebView.setVisibility(View.VISIBLE);
+        aboutWebView.loadUrl("file:///android_asset/about.html");
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if( keyCode == KeyEvent.KEYCODE_BACK ) {
+            aboutWebView.setVisibility(View.GONE);
+        }
+        return true;
     }
 
     // -------------------- THRESHOLD SEEK BAR --------------------
@@ -795,6 +824,18 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     };
 
     // -------------------- NOTIFICATIONS --------------------
+
+    // Code to manage Notification Monitor service lifecycle
+    private final ServiceConnection mNLServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            Log.v("NOTIFICATION MONITOR", "OnServiceConnected...");
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.v("NOTIFICATION MONITOR", "OnServiceDisconnected...");
+        }
+    };
 
     private void setupNotificationListener() {
         final IntentFilter intentFilter = new IntentFilter();
@@ -1101,9 +1142,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     }
 
-    // Code to manage Service lifecycle
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
+    // Code to manage BLE service lifecycle
+    private final ServiceConnection mBLEServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             Log.v("BLE CONNECTION", "OnServiceConnected...");
@@ -1124,7 +1164,6 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                 }
             }
         }
-
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             Log.v("BLE CONNECTION", "OnServiceDisconnected...");
@@ -1134,7 +1173,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     void attemptConnectionToLastConnectedBluetoothDevice() {
         // Automatically connects to the device upon successful start-up initialization.
-        if(currentSelectedBluetoothAddress.contains(":") && !isConnected) {
+        if(currentSelectedBluetoothAddress.contains(":") && currentSelectedBluetoothName.contains(PROXIMITY_BAND_BLE_NAME) && !isConnected) {
             connectionStatusTextView.setText(getResources().getString(R.string.status) + " " + getResources().getString(R.string.connecting) + " " + currentSelectedBluetoothName + "...");
             mBluetoothLeService.connect(currentSelectedBluetoothAddress);
         }

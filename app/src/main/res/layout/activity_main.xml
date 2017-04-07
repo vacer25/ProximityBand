@@ -8,7 +8,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.queensu.apsc_100_mod_3_group_h.proximityband.MainActivity">
+    tools:context="com.queensu.apsc_100_mod_3_group_h.proximityband.MainActivity"
+    android:background="@drawable/activity_border">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -16,9 +17,9 @@
         android:layout_alignParentStart="true"
         android:layout_height="match_parent"
         android:id="@+id/topLayout"
-        android:background="@drawable/parameter_view_border"
+        android:background="@drawable/view_border"
         android:layout_above="@+id/bottomLayout"
-        android:layout_marginBottom="@dimen/activity_vertical_margin">
+        android:layout_marginBottom="15dp">
 
         <com.jjoe64.graphview.GraphView
             android:layout_width="match_parent"
@@ -93,13 +94,24 @@
             android:layout_marginBottom="5dp"
             android:gravity="end"/>
 
+        <Button
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:id="@+id/aboutButton"
+            android:background="@drawable/ic_info_outline_black_24dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginTop="12dp"
+            android:onClick="onAboutButtonClicked" />
+
     </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/bottomLayout"
-        android:background="@drawable/parameter_view_border"
+        android:background="@drawable/view_border"
         android:paddingBottom="15dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true">
@@ -121,7 +133,7 @@
             android:layout_marginLeft="10dp"
             android:layout_toStartOf="@+id/connectionButton"
             android:layout_below="@+id/bluetoothConenctionTextView"
-            android:foreground="@drawable/parameter_view_border"
+            android:foreground="@drawable/view_border"
             android:entries="@array/none_ble_devices"
             android:fadeScrollbars="true"
             android:layout_height="35dp" />
@@ -134,7 +146,7 @@
             android:layout_alignParentEnd="true"
             android:layout_alignTop="@+id/bluetoothDeviceSelectionSpinner"
             android:layout_marginRight="10dp"
-            android:foreground="@drawable/parameter_view_border"
+            android:foreground="@drawable/view_border"
             android:background="@drawable/button_background"
             android:onClick="onSetBluetoothDeviceClicked" />
 
@@ -221,7 +233,7 @@
             android:layout_alignTop="@+id/setButtonActionButton"
             android:layout_alignParentStart="true"
             android:layout_toStartOf="@+id/setButtonActionButton"
-            android:foreground="@drawable/parameter_view_border"
+            android:foreground="@drawable/view_border"
             android:entries="@array/demo_actions"
             android:gravity="center_vertical|start"
             android:layout_height="35dp" />
@@ -235,7 +247,7 @@
             android:layout_below="@+id/buttonActionTextView"
             android:layout_alignStart="@+id/connectionButton"
             android:onClick="onSetButtonActionClicked"
-            android:foreground="@drawable/parameter_view_border"
+            android:foreground="@drawable/view_border"
             android:background="@drawable/button_background" />
 
         -->
@@ -331,4 +343,13 @@
         </LinearLayout>
 
     </RelativeLayout>
+
+    <WebView
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:id="@+id/aboutWebView"
+        android:layout_width="match_parent"
+        android:visibility="gone" />
+
 </RelativeLayout>

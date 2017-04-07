@@ -20,6 +20,7 @@ public class NotificationMonitorService extends NotificationListenerService {
     private static final String TAG = "NLS";
     private static final String TAG_PRE = "[" + NotificationMonitorService.class.getSimpleName() + "] ";
     private static final int EVENT_UPDATE_CURRENT_NOS = 0;
+    private static final int EVENT_EXIT = 1;
     public static final String ACTION_NLS_CONTROL = "com.queensu.apsc_100_mod_3_group_h.proximityband.NLSCONTROL";
     public static final String ACTION_NOTIFICATION_EVENT = "com.queensu.apsc_100_mod_3_group_h.proximityband.NLSCONTROL_POSTED";
     public static List<StatusBarNotification[]> mCurrentNotifications = new ArrayList<StatusBarNotification[]>();
@@ -34,6 +35,9 @@ public class NotificationMonitorService extends NotificationListenerService {
             switch (msg.what) {
                 case EVENT_UPDATE_CURRENT_NOS:
                     updateCurrentNotifications();
+                    break;
+                case EVENT_EXIT:
+                    onDestroy();
                     break;
                 default:
                     break;
