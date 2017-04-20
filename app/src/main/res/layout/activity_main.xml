@@ -94,16 +94,24 @@
             android:layout_marginBottom="5dp"
             android:gravity="end"/>
 
-        <Button
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+        <RelativeLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
             android:id="@+id/aboutButton"
-            android:background="@drawable/ic_info_outline_black_24dp"
-            android:layout_marginRight="12dp"
-            android:layout_marginTop="12dp"
-            android:onClick="onAboutButtonClicked" />
+            android:onClick="onAboutButtonClicked"
+            android:padding="12dp">
+
+            <TextView
+                android:background="@drawable/ic_info_outline_black_24dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:id="@+id/infoIconLabel" />
+
+        </RelativeLayout>
+
+
 
     </RelativeLayout>
 

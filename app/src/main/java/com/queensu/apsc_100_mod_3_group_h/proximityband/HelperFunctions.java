@@ -50,6 +50,7 @@ public class HelperFunctions {
         add("com.android.email"); // Email
         add("com.android.calendar"); // Calendar
         add("com.android.phone"); // Phone
+        add("com.sec.android.app.clockpackage"); // Clock
     }};
 
     public static boolean isSystemPackage(PackageInfo pkgInfo) {

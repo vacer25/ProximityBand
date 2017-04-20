@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     private String packageNamesString = "";
     private String packageAppNamesString = "";
+    private int previousNumberOfNotifications = 0;
 
     public static ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
@@ -126,6 +127,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         add("com.facebook.orca"); // Messenger
         add("com.skype.raider"); // Skype
     }};
+
+    NotificationManager notificationManager;
 
     // -------------------- BLE DEVICES VARIABLES --------------------
 
@@ -233,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         alarmDelayHandler = new Handler();
 
         rssiFilter = new KalmanFilter();
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         getPreferences();
         checkBLECompatibility();
@@ -535,6 +539,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     public void onAboutButtonClicked (View v) {
         aboutWebView.setVisibility(View.VISIBLE);
         aboutWebView.loadUrl("file:///android_asset/about.html");
+        aboutWebView.setScrollY(0);
     }
 
     @Override
@@ -982,42 +987,69 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         updateNotificationsList();
     }
 
+    @TargetApi(23)
     private void updateNotificationsList() {
         if (isEnabledNLS) {
+
+            Log.v("NOTIFICATIONS", "Updating notifications...");
 
             StatusBarNotification[] currentNotifications = NotificationMonitorService.getCurrentNotifications();
             if (currentNotifications == null) {
                 sendBluetoothData("ijk"); // Turn off all flashing
+                previousNumberOfNotifications = 0;
             }
             else {
 
-                ArrayList<String> currentNotificationsPackageNames = new ArrayList<>();
-                for (StatusBarNotification currentStatusBarNotification : currentNotifications) {
-                    currentNotificationsPackageNames.add(currentStatusBarNotification.getPackageName());
-                }
+                Log.v("NOTIFICATIONS", "Do not disturb mode: " + (notificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_NONE ? "On" : "Off"));
 
-                // At least one notification from the red group
-                if(!Collections.disjoint(currentNotificationsPackageNames, redNotificationGroup)) {
-                    sendBluetoothData("I1"); // Flash red LED, short motor vibration
-                }
-                else {
-                    sendBluetoothData("i");
-                }
+                if (notificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
 
-                // At least one notification from the green group
-                if(!Collections.disjoint(currentNotificationsPackageNames, greenNotificationGroup)) {
-                    sendBluetoothData("J1"); // Flash green LED, short motor vibration
-                }
-                else {
-                    sendBluetoothData("j");
-                }
+                    int currentNumberOfNotifications = currentNotifications.length;
+                    Log.v("NOTIFICATIONS", "Current count: " + currentNumberOfNotifications + " Previous count: " + previousNumberOfNotifications);
 
-                // At least one notification from the blue group
-                if(!Collections.disjoint(currentNotificationsPackageNames, blueNotificationGroup)) {
-                    sendBluetoothData("K1"); // Flash blue LED, short motor vibration
-                }
-                else {
-                    sendBluetoothData("k");
+                    ArrayList<String> currentNotificationsPackageNames = new ArrayList<>();
+                    for (StatusBarNotification currentStatusBarNotification : currentNotifications) {
+                        currentNotificationsPackageNames.add(currentStatusBarNotification.getPackageName());
+                    }
+
+                    // At least one notification from the red group
+                    if (!Collections.disjoint(currentNotificationsPackageNames, redNotificationGroup)) {
+                        if(currentNumberOfNotifications >= previousNumberOfNotifications) {
+                            sendBluetoothData("I1"); // Flash red LED, short motor vibration
+                        }
+                        else {
+                            sendBluetoothData("I"); // Flash red LED, no motor vibration
+                        }
+                    } else {
+                        sendBluetoothData("i");
+                    }
+
+                    // At least one notification from the green group
+                    if (!Collections.disjoint(currentNotificationsPackageNames, greenNotificationGroup)) {
+                        if(currentNumberOfNotifications >= previousNumberOfNotifications) {
+                            sendBluetoothData("J1"); // Flash green LED, short motor vibration
+                        }
+                        else {
+                            sendBluetoothData("J"); // Flash green LED, no motor vibration
+                        }
+                    } else {
+                        sendBluetoothData("j");
+                    }
+
+                    // At least one notification from the blue group
+                    if (!Collections.disjoint(currentNotificationsPackageNames, blueNotificationGroup)) {
+                        if(currentNumberOfNotifications >= previousNumberOfNotifications) {
+                            sendBluetoothData("K1"); // Flash blue LED, short motor vibration
+                        }
+                        else {
+                            sendBluetoothData("K"); // Flash blue LED, no motor vibration
+                        }
+                    } else {
+                        sendBluetoothData("k");
+                    }
+
+                    previousNumberOfNotifications = currentNotifications.length;
+
                 }
 
             }
@@ -1098,29 +1130,31 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         Log.v("DATA", "Received Data: " + dataReceived);
 
         AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if(!notificationManager.isNotificationPolicyAccessGranted()) {
             Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             startActivity(intent);
         }
 
-        if(dataReceived.equals(COMMAND_SWITCH_POSITION_1)) {
+        if(dataReceived.equals(COMMAND_SWITCH_POSITION_1)) { // Sound
             if(buttonIsPressed) {
                 notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                updateNotificationsList(true);
             }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             sendBluetoothData(COMMAND_ACK);
         }
-        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_2)) {
+        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_2)) { // Vibrate
             if(buttonIsPressed) {
                 notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                updateNotificationsList(true);
             }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_VIBRATE);
             sendBluetoothData(COMMAND_ACK);
         }
-        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_3)) {
+        else if(dataReceived.equals(COMMAND_SWITCH_POSITION_3)) { // Silent
             if(buttonIsPressed) {
                 notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+                sendBluetoothData("ijk");
             }
             audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
             sendBluetoothData(COMMAND_ACK);

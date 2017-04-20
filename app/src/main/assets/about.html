@@ -12,6 +12,18 @@
                 margin:0 auto;
                 width:300px;
             }
+            #red {
+                color: #ff0000;
+            }
+            #green {
+                color: #00ff00;
+            }
+            #blue {
+                color: #0000ff;
+            }
+            #highlight {
+                color: #FF8C00;
+            }	
         </style>
 
     </head>
@@ -33,33 +45,33 @@
             <li>Wait for the LEDs to quickly flash.</li>
             <li>Start the Proximity Band Android App.</li>
             <li>If Bluetooth is not turned on, accept the prompt to turn it on.</li>
-            <li>Using the "Bluetooth LE Device" dropdown, select the Proximity Band device.</li>
-            <li>Tap the "CONNECT" button.</li>
-            <li>If successful, the button text will change to "DISCONNECT".</li>
+            <li>Using the <span id="highlight">Bluetooth LE Device</span> dropdown, select the Proximity Band device.</li>
+            <li>Tap the <span id="highlight">CONNECT</span> button.</li>
+            <li>If successful, the button text will change to <span id="highlight">DISCONNECT</span>.</li>
             <li>The app will attempt the automatically re-connect to the last connected device on the next launch.</li>
             </ul>
             <br>
 
-            <b>Setting alarm settings:</b>
+            <b>Adjusting alarm settings:</b>
             <ul>
-            <li>Threshold slider: determines how low the signal strength must be for the alarm to activate.</li>
-            <li>Filtering slider: determines how smooth the filtered signal strength is.</li>
-            <li>Delay slider: determines how long the signal strength must remain below the threshold for the alarm to activate.</li>
+            <li><span id="highlight">Threshold slider:</span> determines how low the signal strength must be for the alarm to activate.</li>
+            <li><span id="highlight">Filtering slider:</span> determines how smooth the filtered signal strength is.</li>
+            <li><span id="highlight">Delay slider:</span> determines how long the signal strength must remain below the threshold for the alarm to activate.</li>
             </ul>
             <br>
 
             <b>Setting the notification groups:</b>
             <ul>
             <li>While the device is connected, notifications are forwarded to the Proximity Band.</li>
-            <li>Each notification can activate the red, green, or blue LEDs.</li>
-            <li>To choose which app's notifications will activate the red LED, tap on the red box under "Notification Groups" and select them from the list of all apps on the Android device.</li>
-            <li>Similarly, the same process is used for the green and blue notification groups.</li>
+            <li>Each notification can activate the <span id="red">red</span>, <span id="green">green</span>, or <span id="blue">blue</span> LEDs.</li>
+            <li>To choose which app's notifications will activate the <span id="red">red</span> LED, tap on the <span id="red">red</span> box under <span id="highlight">Notification Groups</span> and select required apps from the list of all apps on the Android device.</li>
+            <li>Similarly, the same process is used for the <span id="green">green</span> and <span id="blue">blue</span> notification groups.</li>
             </ul>
             <br>
 
             <b>Turning off the alarm:</b>
             <ul>
-            <li>In any case while the alarm is turned on, simply press the "Ok" or "Cancel" on the alarm dialog that pops up.</li>
+            <li>In any case while the alarm is turned on, simply press <span id="highlight">Ok</span> or <span id="highlight">Cancel</span> on the alarm dialog that pops up.</li>
             </ul>
             <br>
 
