@@ -991,7 +991,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private void updateNotificationsList() {
         if (isEnabledNLS) {
 
-            Log.v("NOTIFICATIONS", "Updating notifications...");
+            //Log.v("NOTIFICATIONS", "Updating notifications...");
 
             StatusBarNotification[] currentNotifications = NotificationMonitorService.getCurrentNotifications();
             if (currentNotifications == null) {
@@ -1000,12 +1000,12 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
             }
             else {
 
-                Log.v("NOTIFICATIONS", "Do not disturb mode: " + (notificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_NONE ? "On" : "Off"));
+                //Log.v("NOTIFICATIONS", "Do not disturb mode: " + (notificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_NONE ? "On" : "Off"));
 
                 if (notificationManager.getCurrentInterruptionFilter() != NotificationManager.INTERRUPTION_FILTER_NONE) {
 
                     int currentNumberOfNotifications = currentNotifications.length;
-                    Log.v("NOTIFICATIONS", "Current count: " + currentNumberOfNotifications + " Previous count: " + previousNumberOfNotifications);
+                    //Log.v("NOTIFICATIONS", "Current count: " + currentNumberOfNotifications + " Previous count: " + previousNumberOfNotifications);
 
                     ArrayList<String> currentNotificationsPackageNames = new ArrayList<>();
                     for (StatusBarNotification currentStatusBarNotification : currentNotifications) {
@@ -1356,7 +1356,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if(device.getAddress().equals(currentSelectedBluetoothAddress)) {
+                            if(!isWaitingToAutoConnect && device.getAddress().equals(currentSelectedBluetoothAddress)) {
                                 currentRSSI = rssi;
                                 setRSSIValue(rssi, false);
                                 Log.v("BLE SCAN", "Found new device! Address: " + device.getAddress() + " Name: " + device.getName());
