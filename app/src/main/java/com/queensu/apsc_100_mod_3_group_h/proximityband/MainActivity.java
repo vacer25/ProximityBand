@@ -387,6 +387,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         bluetoothDeviceSelectionSpinner = (Spinner)findViewById(R.id.bluetoothDeviceSelectionSpinner);
         //buttonActionSelectionSpinner = (Spinner)findViewById(R.id.buttonActionSelectionSpinner);
         notificationReminderSelectionSpinner = (Spinner)findViewById(R.id.notificationReminderSelectionSpinner);
+        notificationReminderSelectionSpinner.setSelection(Arrays.binarySearch(getResources().getIntArray(R.array.reminder_times_values), notificationReminderTime));
 
         connectionButton = (Button)findViewById(R.id.connectionButton);
         //setButtonActionButton = (Button)findViewById(R.id.setButtonActionButton);
@@ -867,7 +868,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         @Override
         public void run() {
             try {
-                Log.v("NOTIFICATIONS", "REMINDING NOW !!!");
+                //Log.v("NOTIFICATIONS", "REMINDING NOW !!!");
                 updateNotificationsList(true);
             } finally {
                 if(notificationReminderTime > 0) {

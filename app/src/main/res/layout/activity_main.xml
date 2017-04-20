@@ -312,7 +312,7 @@
             android:layout_marginTop="10dp"
             android:layout_alignEnd="@+id/delaySeekBar"
             android:layout_marginBottom="5dp"
-            android:layout_marginEnd="15dp" />
+            android:layout_marginEnd="8dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -366,7 +366,12 @@
                 android:layout_weight="1"
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
-                android:entries="@array/reminder_times">
+                android:entries="@array/reminder_times"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:background="@color/transparent"
+                android:textAlignment="center"
+                android:gravity="center_vertical|start">
             </Spinner>
 
         </LinearLayout>
