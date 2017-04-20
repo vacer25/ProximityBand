@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     Spinner bluetoothDeviceSelectionSpinner;
     //Spinner buttonActionSelectionSpinner;
+    Spinner notificationReminderSelectionSpinner;
 
     GraphView rssiValueGraph;
 
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private Handler rssiFilteringHandler;
     private Handler vibrationRepeatHandler;
     private Handler alarmDelayHandler;
+    private Handler notificationReminderHandler;
 
     // -------------------- VIBRATION --------------------
 
@@ -113,6 +115,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     private String packageNamesString = "";
     private String packageAppNamesString = "";
     private int previousNumberOfNotifications = 0;
+
+    private int notificationReminderTime = 0; // In ms
+    private boolean notificationReminderIsRunning = false;
 
     public static ArrayList<String> redNotificationGroup = new ArrayList<String>() {{
         add("com.android.mms"); // Messages
@@ -222,6 +227,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     public static String PREF_PACKAGES_NAMES = "Packages_Names";
     public static String PREF_PACKAGES_APP_NAMES = "Packages_App_Names";
 
+    public static String PREF_NOTIFICATION_REMINDER_TIME = "Notification_Reminder_Time";
+
     // -------------------- ACTIVITY LIFECYCLE --------------------
 
     @Override
@@ -234,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         rssiFilteringHandler = new Handler();
         vibrationRepeatHandler = new Handler();
         alarmDelayHandler = new Handler();
+        notificationReminderHandler = new Handler();
 
         rssiFilter = new KalmanFilter();
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -347,6 +355,8 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         rssiThreshold = prefs.getInt(PREF_THRESHOLD, rssiThreshold);
         alarmDelay = prefs.getFloat(PREF_DELAY, alarmDelay);
 
+        notificationReminderTime = prefs.getInt(PREF_NOTIFICATION_REMINDER_TIME, notificationReminderTime);
+
         rssiFilter.R = rssiFilteringSmoothness;
 
         //setThresholdValue(rssiThreshold);
@@ -376,6 +386,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         bluetoothDeviceSelectionSpinner = (Spinner)findViewById(R.id.bluetoothDeviceSelectionSpinner);
         //buttonActionSelectionSpinner = (Spinner)findViewById(R.id.buttonActionSelectionSpinner);
+        notificationReminderSelectionSpinner = (Spinner)findViewById(R.id.notificationReminderSelectionSpinner);
 
         connectionButton = (Button)findViewById(R.id.connectionButton);
         //setButtonActionButton = (Button)findViewById(R.id.setButtonActionButton);
@@ -410,6 +421,30 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                         currentSelectedBluetoothName = currentBluetoothDevice.getName();
                     }
                 }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        // Notification reminder
+        notificationReminderSelectionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                notificationReminderTime = getResources().getIntArray(R.array.reminder_times_values)[position];
+                Log.v("NOTIFICATIONS", "Reminder time set to: " + notificationReminderTime);
+                //HelperFunctions.displayToastMessage(MainActivity.this, "Reminder time set to: " + notificationReminderTime);
+                notificationReminderHandler.removeCallbacks(remindOfNotifications);
+                if(notificationReminderTime == 0) {
+                    notificationReminderIsRunning = false;
+                    Log.v("NOTIFICATIONS", "Reminders turned off");
+                }
+                else {
+                    notificationReminderHandler.post(remindOfNotifications);
+                    notificationReminderIsRunning = true;
+                    Log.v("NOTIFICATIONS", "Reminders turned on");
+                }
+                prefs.edit().putInt(PREF_NOTIFICATION_REMINDER_TIME, notificationReminderTime).apply();
             }
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
@@ -828,6 +863,20 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
         }
     };
 
+    Runnable remindOfNotifications = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                Log.v("NOTIFICATIONS", "REMINDING NOW !!!");
+                updateNotificationsList(true);
+            } finally {
+                if(notificationReminderTime > 0) {
+                    notificationReminderHandler.postDelayed(remindOfNotifications, notificationReminderTime);
+                }
+            }
+        }
+    };
+
     // -------------------- NOTIFICATIONS --------------------
 
     // Code to manage Notification Monitor service lifecycle
@@ -1020,6 +1069,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                         else {
                             sendBluetoothData("I"); // Flash red LED, no motor vibration
                         }
+                        //if(!notificationReminderIsRunning && notificationReminderTime > 0) {
+                        //    notificationReminderHandler.postDelayed(remindOfNotifications, notificationReminderTime);
+                        //}
                     } else {
                         sendBluetoothData("i");
                     }
@@ -1032,6 +1084,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                         else {
                             sendBluetoothData("J"); // Flash green LED, no motor vibration
                         }
+                        //if(!notificationReminderIsRunning && notificationReminderTime > 0) {
+                        //    notificationReminderHandler.postDelayed(remindOfNotifications, notificationReminderTime);
+                        //}
                     } else {
                         sendBluetoothData("j");
                     }
@@ -1044,6 +1099,9 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
                         else {
                             sendBluetoothData("K"); // Flash blue LED, no motor vibration
                         }
+                        //if(!notificationReminderIsRunning && notificationReminderTime > 0) {
+                        //    notificationReminderHandler.postDelayed(remindOfNotifications, notificationReminderTime);
+                        //}
                     } else {
                         sendBluetoothData("k");
                     }

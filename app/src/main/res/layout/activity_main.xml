@@ -291,7 +291,7 @@
             android:layout_toEndOf="@+id/delayTextView"
             android:layout_marginLeft="5dp" />
 
-        <!-- NITIFICATION GROUPS -->
+        <!-- NOTIFICATION GROUPS -->
 
         <TextView
             android:text="@string/notification_groups"
@@ -302,6 +302,17 @@
             android:layout_marginTop="10dp"
             android:layout_alignStart="@+id/delaySeekBar"
             android:layout_marginBottom="5dp" />
+
+        <TextView
+            android:text="@string/notification_reminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/notificationReminderLabelTextView"
+            android:layout_below="@+id/delaySeekBar"
+            android:layout_marginTop="10dp"
+            android:layout_alignEnd="@+id/delaySeekBar"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="15dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -347,6 +358,16 @@
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp">
             </com.queensu.apsc_100_mod_3_group_h.proximityband.MultiSelectionSpinner>
+
+            <Spinner
+                android:id="@+id/notificationReminderSelectionSpinner"
+                android:layout_width="0dp"
+                android:layout_height="25dp"
+                android:layout_weight="1"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:entries="@array/reminder_times">
+            </Spinner>
 
         </LinearLayout>
 
